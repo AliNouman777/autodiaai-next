@@ -1,0 +1,71 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Optional: Vercel build output
+.vercel/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor settings
+.vscode/
+.idea/
+*.swp
+
+# Build artifacts
+dist/
+build/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Logs
+logs/
+*.log
+
+# Typescript cache
+*.tsbuildinfo
+
+# Mac OS finder files
+.AppleDouble
+
+# Misc
+*.local
+
+# Optional: Ignore next.config.js if you keep secrets there (uncommon)
+# next.config.js
+
+# Optional: Docker stuff
+docker-compose.override.yml
+
+# Optional: Ignore package-lock.json/yarn.lock for libraries, but not for apps!
+# package-lock.json
+# yarn.lock
+
+# Ignore generated Prisma client (if using Prisma)
+prisma/generated/
+
+# Ignore uploads or data folders if you store them locally
+public/uploads/
+data/
+uploads/
+
+# Ignore coverage for Jest (if using testing)
+jest-html-reporters-*.html
