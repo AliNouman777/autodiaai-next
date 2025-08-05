@@ -1,5 +1,5 @@
 import React from "react";
-import "@/styles/global.css";
+import "@/src/styles/globals.css";
 export default function DashboardLayout({
   children,
 }: {
@@ -8,9 +8,10 @@ export default function DashboardLayout({
   return (
     <html lang="en">
       <body>
-        {/* Layout UI */}
-        {/* Place children where you want to render a page or nested layout */}
-        <main>{children}</main>
+        {/* Add providers/context here if needed */}
+        <main className="container mx-auto" tabIndex={-1}>
+          {children}
+        </main>
       </body>
     </html>
   );
