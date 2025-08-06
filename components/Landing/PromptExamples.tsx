@@ -250,134 +250,151 @@ export default function PromptExamples() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {examples.map((example, index) => (
-            <div
-              key={index}
-              className={`group relative bg-white rounded-xl border-2 border-slate-200 hover:border-primary transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:shadow-xl animate-slide-up`}
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => handleExampleClick(example.prompt)}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
-              {/* Header */}
-              <div className="p-6 pb-4">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/20 rounded-xl flex items-center justify-center transition-transform duration-300 ${
-                        hoveredIndex === index ? "scale-110 rotate-3" : ""
-                      }`}
-                    >
-                      <example.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        {example.title}
-                      </h3>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full border ${
-                          complexityColors[
-                            example.complexity as keyof typeof complexityColors
-                          ]
+          {examples.map((example, index) => {
+            const isFocused = hoveredIndex === index;
+            const isAnyHovered = hoveredIndex !== null;
+            return (
+              <div
+                key={index}
+                className={
+                  `
+                  group relative bg-white rounded-xl border-2 border-slate-200 hover:border-primary
+                  transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:shadow-xl animate-slide-up
+                  ` +
+                  // Focus functionality:
+                  // If another card is hovered, blur all others (except the focused)
+                  // Only on md and up, never on mobile!
+                  (isAnyHovered && !isFocused
+                    ? " md:blur-[2.5px] md:opacity-60 pointer-events-none"
+                    : " pointer-events-auto")
+                }
+                style={{ animationDelay: `${index * 100}ms` }}
+                onClick={() => handleExampleClick(example.prompt)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {/* Header */}
+                <div className="p-6 pb-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/20 rounded-xl flex items-center justify-center transition-transform duration-300 ${
+                          hoveredIndex === index ? "scale-110 rotate-3" : ""
                         }`}
                       >
-                        {example.complexity}
-                      </span>
+                        <example.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900 mb-1">
+                          {example.title}
+                        </h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full border ${
+                            complexityColors[
+                              example.complexity as keyof typeof complexityColors
+                            ]
+                          }`}
+                        >
+                          {example.complexity}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => copyToClipboard(example.prompt, index, e)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-slate-100 rounded-lg"
+                      title="Copy prompt"
+                    >
+                      {copiedIndex === index ? (
+                        <span className="text-green-600 text-xs font-medium">
+                          Copied!
+                        </span>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+                    {example.description}
+                  </p>
+
+                  {/* Preview Info */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
+                    <span className="flex items-center space-x-1">
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{example.preview}</span>
+                    </span>
+                    <span className="text-slate-400">{example.useCase}</span>
+                  </div>
+
+                  {/* Entity Preview */}
+                  <div className="mb-4">
+                    <div className="text-xs text-slate-500 mb-2">
+                      Key Entities:
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {example.entities
+                        .slice(0, 4)
+                        .map((entity, entityIndex) => (
+                          <span
+                            key={entityIndex}
+                            className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md"
+                          >
+                            {entity}
+                          </span>
+                        ))}
+                      {example.entities.length > 4 && (
+                        <span className="text-xs text-slate-400 px-2 py-1">
+                          +{example.entities.length - 4} more
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <button
-                    onClick={(e) => copyToClipboard(example.prompt, index, e)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-slate-100 rounded-lg"
-                    title="Copy prompt"
-                  >
-                    {copiedIndex === index ? (
-                      <span className="text-green-600 text-xs font-medium">
-                        Copied!
-                      </span>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-slate-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                      </svg>
-                    )}
-                  </button>
                 </div>
 
-                <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                  {example.description}
-                </p>
-
-                {/* Preview Info */}
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-                  <span className="flex items-center space-x-1">
-                    <svg
-                      className="w-3 h-3"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{example.preview}</span>
-                  </span>
-                  <span className="text-slate-400">{example.useCase}</span>
-                </div>
-
-                {/* Entity Preview */}
-                <div className="mb-4">
-                  <div className="text-xs text-slate-500 mb-2">
-                    Key Entities:
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {example.entities.slice(0, 4).map((entity, entityIndex) => (
-                      <span
-                        key={entityIndex}
-                        className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md"
-                      >
-                        {entity}
+                {/* Prompt Preview */}
+                <div className="px-6 pb-6">
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 transition-colors group-hover:bg-slate-100">
+                    <div className="text-xs text-slate-500 mb-2 flex items-center justify-between">
+                      <span>Prompt:</span>
+                      <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Click to generate →
                       </span>
-                    ))}
-                    {example.entities.length > 4 && (
-                      <span className="text-xs text-slate-400 px-2 py-1">
-                        +{example.entities.length - 4} more
-                      </span>
-                    )}
+                    </div>
+                    <code className="text-sm text-slate-700 font-mono leading-relaxed line-clamp-3">
+                      {example.prompt}
+                    </code>
                   </div>
                 </div>
+
+                {/* Hover Effects */}
+                <div
+                  className={`absolute inset-0 bg-gradient-to-r from-primary/5 to-blue-700/5 rounded-xl transition-opacity duration-300 pointer-events-none ${
+                    hoveredIndex === index ? "opacity-100" : "opacity-0"
+                  }`}
+                />
               </div>
-
-              {/* Prompt Preview */}
-              <div className="px-6 pb-6">
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 transition-colors group-hover:bg-slate-100">
-                  <div className="text-xs text-slate-500 mb-2 flex items-center justify-between">
-                    <span>Prompt:</span>
-                    <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      Click to generate →
-                    </span>
-                  </div>
-                  <code className="text-sm text-slate-700 font-mono leading-relaxed line-clamp-3">
-                    {example.prompt}
-                  </code>
-                </div>
-              </div>
-
-              {/* Hover Effects */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-r from-primary/5 to-blue-700/5 rounded-xl transition-opacity duration-300 pointer-events-none ${
-                  hoveredIndex === index ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* CTA */}

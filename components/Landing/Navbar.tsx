@@ -1,71 +1,101 @@
-// import { GithubIcon } from "lucide-react";
+"use client";
+import {
+  Navbar,
+  NavBody,
+  NavItems,
+  MobileNav,
+  MobileNavHeader,
+  MobileNavToggle,
+  MobileNavMenu,
+} from "@/components/ui/resizable-navbar";
 import Button from "../common/Button";
 import Logo from "@/public/logo.png";
 import Image from "next/image";
+import React, { useState } from "react";
 
-export default function Navbar() {
+export default function AppNavbar() {
+  const navItems = [
+    { name: "Docs", link: "#docs" },
+    { name: "Pricing", link: "#pricing" },
+    { name: "GitHub", link: "https://github.com" }, // Add icon if you want!
+  ];
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b shadow-md border-slate-200 animate-slide-down">
-      <div className="container mx-auto px-6 py-4">
-        <div className=" flex items-center justify-between ">
-          <div className="flex items-center space-x-2 animate-fade-in">
+    <Navbar>
+      {/* Desktop navbar */}
+      <NavBody>
+        <div className="flex items-center space-x-2">
+          <Image
+            src={Logo}
+            alt="Company logo"
+            width={60}
+            height={48}
+            priority
+            className="w-auto h-auto"
+          />
+          <div className="-ml-5 text-2xl font-bold flex items-center gap-1">
+            <span className="text-gray-700">Auto</span>
+            <span className="text-blue-500">Dia</span>
+            <span className="text-gray-700"> Ai</span>
+          </div>
+        </div>
+        <NavItems items={navItems} />
+        <div className="flex items-center gap-2">
+          {/* <Button href="/erd" className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Try For Free</Button> */}
+          <Button
+            href="/login"
+            className="bg-blue-500 ml-2 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium"
+          >
+            Login
+          </Button>
+        </div>
+      </NavBody>
+
+      {/* Mobile navbar */}
+      <MobileNav>
+        <MobileNavHeader>
+          <div className="flex items-center space-x-2">
             <Image
               src={Logo}
               alt="Company logo"
-              width={80}
-              height={60}
+              width={45}
+              height={36}
               priority
               className="w-auto h-auto"
             />
-            <div className="text-2xl -m-6 font-bold flex items-center">
-              <span className="text-gray-700">Auto</span>
-              <span className="text-blue-500">Dia</span>
-              <span className="text-gray-700"> Ai</span>
-            </div>
+            <span className="text-xl font-bold text-gray-700">Auto</span>
+            <span className="text-xl font-bold text-blue-500">Dia</span>
+            <span className="text-xl font-bold text-gray-700"> Ai</span>
           </div>
-
-          {/* <div className="hidden md:flex items-center space-x-8 animate-fade-in-delay">
+          <MobileNavToggle
+            isOpen={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
+          />
+        </MobileNavHeader>
+        <MobileNavMenu
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        >
+          {navItems.map((item, idx) => (
             <a
-              href="#docs"
-              className="text-slate-600 hover:text-primary transition-colors duration-300 relative group"
+              key={`mobile-link-${idx}`}
+              href={item.link}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block w-full px-4 py-2 text-lg text-neutral-700 hover:bg-blue-100 rounded"
             >
-              Docs
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              {item.name}
             </a>
-            <a
-              href="#pricing"
-              className="text-slate-600 hover:text-primary transition-colors duration-300 relative group"
-            >
-              Pricing
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </a>
-            <a
-              href="#"
-              className="text-slate-600 hover:text-primary transition-colors duration-300 flex items-center space-x-1 relative group"
-            >
-              <GithubIcon className="h-4 w-4" />
-              <span>GitHub</span>
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </a>
-          </div> */}
-
-          <div>
-            {/* <Button
-              href="/erd"
-              className="bg-blue-500 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow"
-            >
-              Try For Free
-            </Button> */}
-
-            <Button
-              href="/login"
-              className="bg-blue-500 ml-2 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow"
-            >
-              Login
-            </Button>
-          </div>
-        </div>
-      </div>
-    </nav>
+          ))}
+          <Button
+            href="/login"
+            className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Login
+          </Button>
+        </MobileNavMenu>
+      </MobileNav>
+    </Navbar>
   );
 }

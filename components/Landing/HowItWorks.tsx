@@ -144,7 +144,7 @@ export default function HowItWorks() {
           className="text-center mt-16"
           initial={{ opacity: 0, y: 36 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.7 }}
+          transition={{ duration: 0.9, delay: 0.1 }}
         >
           <div className="inline-flex items-center space-x-4 bg-white rounded-full px-6 py-3 shadow-lg border border-slate-200">
             <span className="text-slate-600">Ready to get started?</span>
