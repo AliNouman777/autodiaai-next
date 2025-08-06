@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { HamIcon, XIcon } from "lucide-react";
+import { Menu, XIcon } from "lucide-react";
 import {
   motion,
   AnimatePresence,
@@ -68,7 +68,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
     <motion.div
       ref={ref}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("sticky inset-x-0 top-20 z-40 w-full", className)}
+      className={cn("sticky inset-x-0 top-0 z-40 w-full", className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
@@ -225,7 +225,8 @@ export const MobileNavToggle = ({
   return isOpen ? (
     <XIcon className="text-black dark:text-white" onClick={onClick} />
   ) : (
-    <HamIcon className="text-black dark:text-white" onClick={onClick} />
+    <Menu className="text-black dark:text-white" onClick={onClick} />
+
   );
 };
 

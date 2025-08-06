@@ -1,5 +1,5 @@
 // Features.tsx
-import { featuresData } from "@/constant/data/featuresData"; // adjust path as needed
+// import { featuresData } from "@/constant/data/featuresData"; // adjust path as needed
 import Image from "next/image";
 
 export function Features() {

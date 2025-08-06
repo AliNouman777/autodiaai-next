@@ -12,6 +12,7 @@ import Button from "../common/Button";
 import Logo from "@/public/logo.png";
 import Image from "next/image";
 import React, { useState } from "react";
+import Link from "next/link";
 
 export default function AppNavbar() {
   const navItems = [
@@ -22,10 +23,10 @@ export default function AppNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <Navbar>
+    <Navbar >
       {/* Desktop navbar */}
       <NavBody>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 ">
           <Image
             src={Logo}
             alt="Company logo"
@@ -34,19 +35,21 @@ export default function AppNavbar() {
             priority
             className="w-auto h-auto"
           />
-          <div className="-ml-5 text-2xl font-bold flex items-center gap-1">
+          <div className="-ml-5 text-2xl font-bold flex items-center ">
             <span className="text-gray-700">Auto</span>
             <span className="text-blue-500">Dia</span>
-            <span className="text-gray-700"> Ai</span>
+            &nbsp;
+            <span className="text-gray-700">{" "} Ai</span>
           </div>
         </div>
         <NavItems items={navItems} />
         <div className="flex items-center gap-2">
           {/* <Button href="/erd" className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Try For Free</Button> */}
-          <Button
+             <Button
             href="/login"
-            className="bg-blue-500 ml-2 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium"
-          >
+            className="bg-blue-500  text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+          
+          >            
             Login
           </Button>
         </div>
@@ -89,9 +92,9 @@ export default function AppNavbar() {
           ))}
           <Button
             href="/login"
-            className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full"
+            className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer"
             onClick={() => setIsMobileMenuOpen(false)}
-          >
+          >            
             Login
           </Button>
         </MobileNavMenu>

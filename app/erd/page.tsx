@@ -1,7 +1,10 @@
 import React from "react";
-
 const page = () => {
-  return <div>page</div>;
+  return(
+     <>
+     <h1>ali</h1>
+  </>
+  )
 };
 
 export default page;

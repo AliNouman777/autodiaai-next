@@ -10,15 +10,19 @@ import PromptExamples from "@/components/Landing/PromptExamples";
 
 export default function Page() {
   return (
-    <div className="text-sm justify-center container mx-auto  ">
+    <>
+    
+    <div className=" container mx-auto  ">
       <Navbar />
       <Hero />
-      <Features />
+      {/* <Features /> */}
       <HowItWorks />
       <UseCases />
       <PromptExamples />
       <FAQ />
       <Footer />
+      
     </div>
+    </>
   );
 }
