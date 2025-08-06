@@ -1,6 +1,6 @@
 import React from "react";
 import "@/src/styles/globals.css";
-export default function DashboardLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -9,8 +9,8 @@ export default function DashboardLayout({
     <html lang="en">
       <body>
         {/* Add providers/context here if needed */}
-        <main className="container mx-auto" tabIndex={-1}>
-          {children}
+        <main>
+          <div className=" mx-auto">{children}</div>
         </main>
       </body>
     </html>

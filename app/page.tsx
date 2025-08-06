@@ -10,7 +10,7 @@ import PromptExamples from "@/components/Landing/PromptExamples";
 
 export default function Page() {
   return (
-    <div className="text-sm justify-center min-h-screen  ">
+    <div className="text-sm justify-center container mx-auto  ">
       <Navbar />
       <Hero />
       <Features />

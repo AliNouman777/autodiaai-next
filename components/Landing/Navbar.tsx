@@ -6,8 +6,8 @@ import Image from "next/image";
 export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b shadow-md border-slate-200 animate-slide-down">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between ">
+      <div className="container mx-auto px-6 py-4">
+        <div className=" flex items-center justify-between ">
           <div className="flex items-center space-x-2 animate-fade-in">
             <Image
               src={Logo}
@@ -49,12 +49,21 @@ export default function Navbar() {
             </a>
           </div> */}
 
-          <Button
-            href="/erd"
-            className="bg-blue-500 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow"
-          >
-            Try For Free
-          </Button>
+          <div>
+            {/* <Button
+              href="/erd"
+              className="bg-blue-500 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow"
+            >
+              Try For Free
+            </Button> */}
+
+            <Button
+              href="/login"
+              className="bg-blue-500 ml-2 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow"
+            >
+              Login
+            </Button>
+          </div>
         </div>
       </div>
     </nav>
