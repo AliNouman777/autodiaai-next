@@ -365,6 +365,16 @@
   background: white;
 }
 
+.no-visible-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.no-visible-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .w-80 {

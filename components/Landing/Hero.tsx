@@ -32,7 +32,7 @@ export default function Hero() {
               style={{ animationDelay: "0.6s", animationFillMode: "both" }}
             >
               <Button
-                href="/erd"
+                href="/diagram"
                 className="bg-primary text-white px-8 py-4 rounded-full hover:bg-blue-700 transition-all duration-300 font-semibold text-lg hover-lift transform hover:scale-105 cursor-pointer  flex "
               >
                 <LayoutTemplate className="h-5 w-5 mr-2 mt-1" />

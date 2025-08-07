@@ -1,5 +1,5 @@
-"use client"
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+"use client";
+import { UserStar, Home, MessageSquareQuote, LogOut } from "lucide-react";
 
 import {
   Sidebar,
@@ -10,48 +10,64 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import Image from "next/image";
+import Logo from "@/public/logo.png";
 
 // Menu items.
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/diagram",
     icon: Home,
   },
+  // {
+  //   title: "MemberShip",
+  //   url: "#",
+  //   icon: UserStar,
+  // },
   {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
+    title: "Feedback",
+    url: "/feedback",
+    icon: MessageSquareQuote,
   },
   {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
+    title: "Logout",
+    url: "/logout",
+    icon: LogOut,
   },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-]
+];
 
 export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            <div className="flex space-x-2 my-2 ">
+              <Link href={"/"} className="flex space-x-2 my-2  cursor-pointer ">
+                <Image
+                  src={Logo}
+                  alt="Company logo"
+                  width={60}
+                  height={48}
+                  priority
+                  className="w-auto h-auto"
+                />
+                <div className="-ml-5 text-xl font-semibold flex items-center ">
+                  <span className="text-gray-700">Auto</span>
+                  <span className="text-blue-500">Dia</span>
+                  &nbsp;
+                  <span className="text-gray-700"> Ai</span>
+                </div>
+              </Link>
+            </div>
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="mt-2">
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="mt-2">
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
                       <item.icon />
@@ -65,5 +81,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }

@@ -15,7 +15,7 @@ export default function Page() {
     <div className=" container mx-auto  ">
       <Navbar />
       <Hero />
-      {/* <Features /> */}
+      <Features />
       <HowItWorks />
       <UseCases />
       <PromptExamples />
