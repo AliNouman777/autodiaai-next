@@ -1,9 +1,9 @@
-import React from "react";
-import { BaseEdge, getBezierPath, EdgeProps } from "@xyflow/react";
+import React, { memo } from "react";
+import { BaseEdge, EdgeProps } from "@xyflow/react";
 
-// 2. Pass your type as generic argument to EdgeProps
-export default function SuperCurvyEdge(props: EdgeProps) {
+const SuperCurvyEdge = memo((props: EdgeProps) => {
   const {
+    id,
     sourceX,
     sourceY,
     targetX,
@@ -14,7 +14,6 @@ export default function SuperCurvyEdge(props: EdgeProps) {
     data,
   } = props;
 
-  // Custom Bezier path with extra curvature:
   const curveAmount = 200;
   const edgePath = `
     M ${sourceX},${sourceY}
@@ -23,13 +22,16 @@ export default function SuperCurvyEdge(props: EdgeProps) {
       ${targetX},${targetY}
   `;
 
+  const isConnected = !!data?.isConnected;
+
   return (
     <>
+      {/* Define filter once per edge */}
       <svg style={{ display: "none" }}>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="glow" />
+        <filter id={`glow-${id}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
           <feMerge>
-            <feMergeNode in="glow" />
+            <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
@@ -37,10 +39,17 @@ export default function SuperCurvyEdge(props: EdgeProps) {
 
       <BaseEdge
         path={edgePath}
-        markerStart={markerStart ? `${markerStart}` : undefined}
-        markerEnd={markerEnd ? `${markerEnd}` : undefined}
+        markerStart={markerStart || undefined}
+        markerEnd={markerEnd || undefined}
         interactionWidth={interactionWidth}
+        style={{
+          stroke: isConnected ? "#0042ff" : "#666",
+          strokeWidth: isConnected ? 1.8 : 1,
+          filter: isConnected ? `url(#glow-${id})` : "none",
+        }}
       />
     </>
   );
-}
+});
+
+export default SuperCurvyEdge;

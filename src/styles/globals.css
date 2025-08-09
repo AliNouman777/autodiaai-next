@@ -235,7 +235,8 @@
 }
 
 .animate-pulse-subtle {
-  animation: pulseSubtle 3s ease-in-out infinite;
+  animation: pulseSubtle 3s ease-out infinite;
+
 }
 
 .animate-float {
@@ -243,7 +244,7 @@
 }
 
 .animate-glow {
-  animation: glow 2s ease-in-out infinite;
+  animation: glow 2s ease-out infinite;
 }
 
 /* Scroll-triggered animations */

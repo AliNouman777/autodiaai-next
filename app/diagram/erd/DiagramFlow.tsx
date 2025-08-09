@@ -13,151 +13,179 @@ import { Markers } from "@/components/diagramcanvas/markers";
 import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
 import SuperCurvyEdge from "@/components/diagramcanvas/customedges";
 
+// ---- Node & Edge Types ----
 const nodeTypes = { databaseSchema: CustomERDNode };
-const edgeTypes = {
-  superCurvyEdge: SuperCurvyEdge,
-};
+const edgeTypes = { superCurvyEdge: SuperCurvyEdge };
 
-const initialNodes = [
-  {
-    id: "1",
-    position: { x: 0, y: 0 },
-    type: "databaseSchema",
-    data: {
-      label: "Patients",
-      schema: [
-        { id: "patients-id", title: "id", key: "PK", type: "uuid" },
-        { id: "patients-name", title: "name", type: "varchar" },
-        { id: "patients-dob", title: "dob", type: "date" },
-        { id: "patients-gender", title: "gender", type: "varchar" },
-        { id: "patients-phone", title: "phone", type: "varchar" },
-        { id: "patients-address", title: "address", type: "varchar" },
-        { id: "patients-email", title: "email", type: "varchar" },
-      ],
-    },
-  },
-  {
-    id: "2",
-    position: { x: 300, y: 0 },
-    type: "databaseSchema",
-    data: {
-      label: "Doctors",
-      schema: [
-        { id: "doctors-id", title: "id", key: "PK", type: "uuid" },
-        { id: "doctors-name", title: "name", type: "varchar" },
-        {
-          id: "doctors-specialization",
-          title: "specialization",
-          type: "varchar",
-        },
-        {
-          id: "doctors-department_id",
-          title: "department_id",
-          key: "FK",
-          type: "uuid",
-        },
-        { id: "doctors-phone", title: "phone", type: "varchar" },
-        { id: "doctors-email", title: "email", type: "varchar" },
-      ],
-    },
-  },
-];
+// ---- Initial Data ----
+import { initialNodes, initialEdges } from "@/data/initialdata";
 
-// The field-to-field edge (from Patients.id to Doctors.department_id)
-const initialEdges = [
-  {
-    id: "e1-2",
-    source: "1",
-    sourceHandle: "patients-id-right",
-    target: "2",
-    targetHandle: "doctors-department_id-left",
-    type: "superCurvyEdge", // must match your edgeTypes key
-    markerStart: "one-start",
-    markerEnd: "zero-end",
-    data: {},
-  },
-];
+// ---- Marker Flip Helper ----
+function flipMarkerName(name: string) {
+  if (typeof name !== "string") return name;
+  if (name.endsWith("-start")) return name.replace(/-start$/, "-end");
+  if (name.endsWith("-end")) return name.replace(/-end$/, "-start");
+  return name;
+}
+
+// ---- Handle Flip Helper ----
+function flipHandleId(handleId?: string) {
+  if (!handleId) return handleId;
+  if (handleId.endsWith("-left")) return handleId.replace(/-left$/, "-right");
+  if (handleId.endsWith("-right")) return handleId.replace(/-right$/, "-left");
+  return handleId;
+}
+
+// ---- Calculate Node Center ----
+function getNodeCenter(node: any): [number, number] {
+  const width = node.width ?? 150; // fallback width
+  const height = node.height ?? 50; // fallback height
+  return [node.position.x + width / 2, node.position.y + height / 2];
+}
 
 const DiagramFlow = () => {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
-  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  const onNodesChange = useCallback(
-    (changes) =>
-      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    []
-  );
-  const onEdgesChange = useCallback(
-    (changes) =>
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    []
-  );
-  const onConnect = useCallback(
-    (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    []
-  );
+  // ---- Main Nodes Change with Flip Logic ----
+  const handleNodesChange = useCallback(
+    (changes) => {
+      setNodes((nds) => {
+        const updatedNodes = applyNodeChanges(changes, nds);
 
-  const connectedEdges = edges.filter(
-    (e) => e.source === hoveredNodeId || e.target === hoveredNodeId
-  );
+        setEdges((currentEdges) => {
+          let updatedEdges = [...currentEdges];
 
-  const connectedNodeIds = new Set(
-    connectedEdges.map((e) =>
-      e.source === hoveredNodeId ? e.target : e.source
-    )
-  );
+          changes.forEach((change) => {
+            if (change.type !== "position") return;
 
-  const nodesWithHover = useMemo(
-    () =>
-      nodes.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          onNodeHover: () => setHoveredNodeId(n.id),
-          onNodeUnhover: () => setHoveredNodeId(null),
-          isHovered: hoveredNodeId === n.id,
-          isConnected: connectedNodeIds.has(n.id),
-        },
-      })),
-    [nodes, hoveredNodeId]
-  );
+            const changedNode = updatedNodes.find((n) => n.id === change.id);
+            if (!changedNode) return;
 
-  const connectedEdgeIds = new Set(connectedEdges.map((e) => e.id));
+            currentEdges.forEach((edge) => {
+              if (edge.source !== change.id && edge.target !== change.id) return;
 
-  const edgesWithHover = edges.map((e) => ({
-    ...e,
-    data: {
-      ...(e.data || {}),
-      isConnected: connectedEdgeIds.has(e.id),
-      // optional: hoveredNodeId for further logic
-      hoveredNodeId,
+              const sourceNode = updatedNodes.find((n) => n.id === edge.source);
+              const targetNode = updatedNodes.find((n) => n.id === edge.target);
+              if (!sourceNode || !targetNode) return;
+
+              const [sx] = getNodeCenter(sourceNode);
+              const [tx] = getNodeCenter(targetNode);
+
+              const shouldFlip = sx > tx;
+
+              if (shouldFlip) {
+                const markerStart =
+                  typeof edge.markerEnd === "string"
+                    ? flipMarkerName(edge.markerEnd.replace("url(#", "").replace(")", ""))
+                    : edge.markerEnd;
+                const markerEnd =
+                  typeof edge.markerStart === "string"
+                    ? flipMarkerName(edge.markerStart.replace("url(#", "").replace(")", ""))
+                    : edge.markerStart;
+
+                const flippedEdge = {
+                  ...edge,
+                  source: edge.target,
+                  target: edge.source,
+                  sourceHandle: flipHandleId(edge.targetHandle),
+                  targetHandle: flipHandleId(edge.sourceHandle),
+                  markerStart,
+                  markerEnd,
+                };
+
+                updatedEdges = updatedEdges.map((e) =>
+                  e.id === edge.id ? flippedEdge : e
+                );
+              }
+            });
+          });
+
+          return updatedEdges;
+        });
+
+        return updatedNodes;
+      });
     },
-  }));
+    []
+  );
+
+  // ---- Edges Change ----
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  // ---- On Connect ----
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
+
+  // ---- Hover Logic ----
+  const connectedEdges = useMemo(() => {
+    if (!hoveredNodeId) return [];
+    return edges.filter(
+      (e) => e.source === hoveredNodeId || e.target === hoveredNodeId
+    );
+  }, [edges, hoveredNodeId]);
+
+  const connectedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    connectedEdges.forEach((e) =>
+      ids.add(e.source === hoveredNodeId ? e.target : e.source)
+    );
+    return ids;
+  }, [connectedEdges, hoveredNodeId]);
+
+  // ---- Nodes with Hover State ----
+  const nodesWithHover = useMemo(() => {
+    return nodes.map((n) => ({
+      ...n,
+      data: {
+        ...n.data,
+        onNodeHover: () => setHoveredNodeId(n.id),
+        onNodeUnhover: () => setHoveredNodeId(null),
+        isHovered: hoveredNodeId === n.id,
+        isConnected: connectedNodeIds.has(n.id),
+      },
+    }));
+  }, [nodes, hoveredNodeId, connectedNodeIds]);
+
+  // ---- Edges with Hover State ----
+  const connectedEdgeIds = useMemo(
+    () => new Set(connectedEdges.map((e) => e.id)),
+    [connectedEdges]
+  );
+
+  const edgesWithHover = useMemo(() => {
+    return edges.map((e) => ({
+      ...e,
+      animated: connectedEdgeIds.has(e.id),
+      data: {
+        ...(e.data || {}),
+        isConnected: connectedEdgeIds.has(e.id),
+        hoveredNodeId,
+      },
+    }));
+  }, [edges, connectedEdgeIds, hoveredNodeId]);
 
   return (
-    <div className="w-full h-full">
-      <style>
-        {`
-        .glow-blue {
-          box-shadow: 0 0 24px 4px #3b82f6, 0 0 48px 8px #2563eb !important;
-          transition: box-shadow 0.2s;
-        }
-        `}
-      </style>
+    <div className="w-full h-full bg-gray-100">
       <ReactFlow
         nodes={nodesWithHover}
         edges={edgesWithHover}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onEdgesChange={onEdgesChange}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onConnect={onConnect}
         fitView
       >
         <Background />
         <Controls />
-        <Markers />
+        <Markers color={hoveredNodeId ? "#0042ff" : "#666"} />
       </ReactFlow>
     </div>
   );
