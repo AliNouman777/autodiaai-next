@@ -12,6 +12,9 @@ import "@xyflow/react/dist/style.css";
 import { Markers } from "@/components/diagramcanvas/markers";
 import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
 import SuperCurvyEdge from "@/components/diagramcanvas/customedges";
+import { useDiagram } from "@/src/context/DiagramContext";
+
+
 
 // ---- Node & Edge Types ----
 const nodeTypes = { databaseSchema: CustomERDNode };
@@ -44,6 +47,7 @@ function getNodeCenter(node: any): [number, number] {
 }
 
 const DiagramFlow = () => {
+  const { diagramRef, setReactFlowInstance } = useDiagram();
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -172,7 +176,7 @@ const DiagramFlow = () => {
   }, [edges, connectedEdgeIds, hoveredNodeId]);
 
   return (
-    <div className="w-full h-full bg-gray-100">
+    <div className="w-full h-full bg-gray-100 " ref={diagramRef}>
       <ReactFlow
         nodes={nodesWithHover}
         edges={edgesWithHover}
@@ -181,6 +185,7 @@ const DiagramFlow = () => {
         onEdgesChange={onEdgesChange}
         onNodesChange={handleNodesChange}
         onConnect={onConnect}
+        onInit={setReactFlowInstance} 
         fitView
       >
         <Background />

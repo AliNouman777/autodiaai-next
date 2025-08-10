@@ -68,10 +68,12 @@ export default function CustomERDNode({ data }: DatabaseSchemaNodeProps) {
   }, []);
 
   const glowClasses = [
-    data.isHovered && "ring-1 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.8)]",
-    data.isConnected && "ring-1 ring-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.9)]",
-  ]
-    .filter(Boolean)
+    data.isHovered &&
+  "ring-2 ring-blue-500 shadow-[0_0_40px_rgba(59,130,246,5)]", 
+data.isConnected &&
+  "ring-2 ring-purple-500 shadow-[0_0_50px_rgba(168,85,247,5)]" 
+
+  ].filter(Boolean)
     .join(" ");
 
   return (
@@ -129,8 +131,8 @@ export default function CustomERDNode({ data }: DatabaseSchemaNodeProps) {
           <div
             key={col.id}
             className={`flex items-center px-2 py-1 border-b last:border-b-0 ${
-              col.key === "PK" ? "bg-yellow-100" : col.key === "FK" ? "bg-blue-100" : "bg-white"
-            } relative min-h-[32px]`}
+              col.key === "PK" ? "bg-yellow-100" : col.key === "FK" ? "bg-blue-200" : "bg-white"
+            } relative min-h-[32px] hover:bg-gray-100 `}
           >
             {/* Left Handle */}
             <Handle

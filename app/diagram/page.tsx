@@ -7,7 +7,11 @@ import { TableSkeleton } from "@/components/skeleton/TableSkeleton";
 const Page = () => {
   return (
     <div className="w-full">
-      <StatefulButton />
+     <StatefulButton
+  label="Create New Diagram"
+  navigateTo="/diagram/erd"
+/>
+
 
       <Suspense fallback={<TableSkeleton rows={5} />}>
         <Table />

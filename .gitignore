@@ -64,7 +64,7 @@ prisma/generated/
 
 # Ignore uploads or data folders if you store them locally
 public/uploads/
-data/
+# data/
 uploads/
 
 # Ignore coverage for Jest (if using testing)

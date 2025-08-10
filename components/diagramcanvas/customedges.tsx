@@ -14,7 +14,7 @@ const SuperCurvyEdge = memo((props: EdgeProps) => {
     data,
   } = props;
 
-  const curveAmount = 200;
+  const curveAmount = 100;
   const edgePath = `
     M ${sourceX},${sourceY}
     C ${sourceX + curveAmount},${sourceY}

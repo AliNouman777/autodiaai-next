@@ -1,24 +1,58 @@
 "use client";
-import React from "react";
 import { Button } from "@/src/components/ui/stateful-button";
 import { useRouter } from "next/navigation";
+import React , {useState} from "react";
 
-const StatefulButton = () => {
+type StatefulButtonProps = {
+  label: string;
+  navigateTo?: string; // optional route to navigate to
+  delay?: number;      // delay in ms before action
+  onAction?: () => Promise<void> | void; // async/ sync action
+  className?: string;
+  loadingText?: string; 
+};
+
+const StatefulButton: React.FC<StatefulButtonProps> = ({
+  label,
+  navigateTo,
+  delay = 0,
+  onAction,
+  className = "",
+  loadingText = "Processing...",
+}) => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleClick = () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        router.push("/diagram/erd");
-      }, 1000);
-    });
+  const handleClick = async () => {
+    try {
+      setLoading(true);
+
+      if (delay > 0) {
+        await new Promise((res) => setTimeout(res, delay));
+      }
+
+      if (onAction) {
+        await onAction();
+      }
+
+      if (navigateTo) {
+        router.push(navigateTo);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="py-3">
-      <Button onClick={handleClick}> Create New Diagram</Button>
-    </div>
+    <Button
+      onClick={handleClick}
+      disabled={loading}
+      // className={`${className} ${loading ? "opacity-70 cursor-wait" : ""}`}
+    >
+      {loading ? loadingText : label}
+    </Button>
   );
 };
 
 export default StatefulButton;
+
