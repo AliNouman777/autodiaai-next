@@ -9,13 +9,35 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useDiagramApi } from "@/src/context/DiagramContext";
+import toast from "react-hot-toast";
+import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 
-export default function DeleteDialog({ onDelete }: { onDelete?: () => void }) {
+export default function DeleteDialog({
+  onDelete,
+  diagramId,
+}: {
+  onDelete?: () => void;
+  diagramId: string;
+}) {
   const [open, setOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const { deleteDiagram, deleting } = useDiagramApi();
 
-  const handleDelete = () => {
+  const busy = isDeleting || deleting;
+
+  const handleDelete = async () => {
     onDelete?.();
-    setOpen(false); // Close dialog after delete
+    try {
+      setIsDeleting(true);
+      await deleteDiagram(diagramId);
+      toast.success("Diagram deleted");
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -25,6 +47,7 @@ export default function DeleteDialog({ onDelete }: { onDelete?: () => void }) {
           type="button"
           className="cursor-pointer rounded-lg hover:scale-110"
           aria-label="Delete"
+          disabled={busy}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -44,25 +67,36 @@ export default function DeleteDialog({ onDelete }: { onDelete?: () => void }) {
           </svg>
         </button>
       </DialogTrigger>
+
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Are you sure you want to delete?</DialogTitle>
           <DialogDescription>This action cannot be undone.</DialogDescription>
         </DialogHeader>
+
         <DialogFooter className="flex gap-2 mt-4 justify-end">
           <button
             type="button"
-            className="rounded-md px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100 transition cursor-pointer"
+            className="rounded-md px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100 transition cursor-pointer disabled:opacity-60"
             onClick={() => setOpen(false)}
+            disabled={busy}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded-md px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition cursor-pointer"
+            className="rounded-md px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition cursor-pointer disabled:opacity-60 inline-flex items-center"
             onClick={handleDelete}
+            disabled={busy}
           >
-            Delete
+            {busy ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Deleting…
+              </>
+            ) : (
+              "Delete"
+            )}
           </button>
         </DialogFooter>
       </DialogContent>

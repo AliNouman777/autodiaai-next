@@ -2,7 +2,7 @@ import React from "react";
 import { TabsDemo } from "./TextTab";
 import DiagramFlow from "./DiagramFlow";
 
-const page = () => {
+const page = ({ diagramId }) => {
   return (
     <div className="flex  h-full  w-full gap-3 ">
       <div className="w-full md:w-1/3">

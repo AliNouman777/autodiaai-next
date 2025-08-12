@@ -25,8 +25,8 @@ export function AppSidebar() {
     if (loading) return;
     try {
       await logout(); // Calls API + clears auth state
-      toast.success("Logged out successfully");
       router.replace("/login"); // Redirect to login
+      toast.success("Logged out successfully");
     } catch (error) {
       toast.error("Logout failed. Try again.");
     }
@@ -72,7 +72,7 @@ export function AppSidebar() {
                   <span className="text-gray-700">Auto</span>
                   <span className="text-blue-500">Dia</span>
                   &nbsp;
-                  <span className="text-gray-700"> Ai</span>
+                  <span className="text-blue-500"> Ai</span>
                 </div>
               </Link>
             </div>

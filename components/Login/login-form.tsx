@@ -28,7 +28,7 @@ export function LoginForm({ className, ...props }: Props) {
 
   // If already logged in, redirect (optional)
   React.useEffect(() => {
-    if (user) router.replace("/");
+    if (user) router.replace("/diagram");
   }, [user, router]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -36,7 +36,7 @@ export function LoginForm({ className, ...props }: Props) {
     setError(null);
     try {
       await login(email, password);
-      router.replace("/");
+      router.replace("/diagram");
     } catch (err: any) {
       setError(err?.message || "Login failed");
     }

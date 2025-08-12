@@ -1,23 +1,19 @@
+// app/diagram/page.tsx (client or server is fine since wrapper is client)
 import React, { Suspense } from "react";
-
 import Table from "@/components/common/table";
-import StatefulButton from "@/components/common/StatefulButton";
 import { TableSkeleton } from "@/components/skeleton/TableSkeleton";
+import CreateDiagramSheet from "@/components/common/CreateDiagramSheet";
+import RequireAuth from "@/components/RequireAuth";
 
-const Page = () => {
+export default function Page() {
   return (
-    <div className="w-full">
-     <StatefulButton
-  label="Create New Diagram"
-  navigateTo="/diagram/erd"
-/>
-
-
-      <Suspense fallback={<TableSkeleton rows={5} />}>
-        <Table />
-      </Suspense>
-    </div>
+    <RequireAuth>
+      <div className="w-full gap-3 flex flex-col">
+        <CreateDiagramSheet triggerLabel="Create Diagram" className="w-fit " />
+        <Suspense fallback={<TableSkeleton rows={5} />}>
+          <Table />
+        </Suspense>
+      </div>
+    </RequireAuth>
   );
-};
-
-export default Page;
+}

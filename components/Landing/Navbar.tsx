@@ -12,18 +12,100 @@ import Button from "../common/Button";
 import Logo from "@/public/logo.png";
 import Image from "next/image";
 import React, { useState } from "react";
-import Link from "next/link";
+import { useAuth } from "@/src/context/AuthContext";
+import ButtonSkeleton from "../skeleton/landing/ButtonSkeleton";
 
 export default function AppNavbar() {
   const navItems = [
     { name: "Docs", link: "#docs" },
     { name: "Pricing", link: "#pricing" },
-    { name: "GitHub", link: "https://github.com" }, // Add icon if you want!
+    { name: "GitHub", link: "https://github.com" },
   ];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, initializing } = useAuth();
+
+  const DesktopCTA = () => {
+    if (initializing) {
+      return (
+        <div className="flex items-center gap-2">
+          <ButtonSkeleton />
+          <ButtonSkeleton />
+        </div>
+      );
+    }
+    if (user) {
+      return (
+        <div className="flex items-center gap-2">
+          <Button
+            href="/diagram"
+            className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+          >
+            Generate Diagram
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          href="/signup"
+          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+        >
+          SignUp
+        </Button>
+        <Button
+          href="/login"
+          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+        >
+          Login
+        </Button>
+      </div>
+    );
+  };
+
+  const MobileCTA = () => {
+    if (initializing) {
+      return (
+        <div className="mt-4 w-full">
+          <ButtonSkeleton fullWidth className="mt-0" />
+        </div>
+      );
+    }
+    if (user) {
+      return (
+        <div className="flex items-center mx-auto gap-2">
+          <Button
+            href="/diagram"
+            className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Generate Diagram
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center mx-auto gap-2">
+        <Button
+          href="/signup"
+          className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          SignUp
+        </Button>
+        <Button
+          href="/login"
+          className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          Login
+        </Button>
+      </div>
+    );
+  };
 
   return (
-    <Navbar >
+    <Navbar>
       {/* Desktop navbar */}
       <NavBody>
         <div className="flex items-center space-x-2 ">
@@ -39,20 +121,13 @@ export default function AppNavbar() {
             <span className="text-gray-700">Auto</span>
             <span className="text-blue-500">Dia</span>
             &nbsp;
-            <span className="text-gray-700">{" "} Ai</span>
+            <span className="text-gray-700"> Ai</span>
           </div>
         </div>
+
         <NavItems items={navItems} />
-        <div className="flex items-center gap-2">
-          {/* <Button href="/erd" className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">Try For Free</Button> */}
-             <Button
-            href="/login"
-            className="bg-blue-500  text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
-          
-          >            
-            Login
-          </Button>
-        </div>
+
+        <DesktopCTA />
       </NavBody>
 
       {/* Mobile navbar */}
@@ -76,6 +151,7 @@ export default function AppNavbar() {
             onClick={() => setIsMobileMenuOpen((v) => !v)}
           />
         </MobileNavHeader>
+
         <MobileNavMenu
           isOpen={isMobileMenuOpen}
           onClose={() => setIsMobileMenuOpen(false)}
@@ -90,13 +166,8 @@ export default function AppNavbar() {
               {item.name}
             </a>
           ))}
-          <Button
-            href="/login"
-            className="bg-blue-500 mt-4 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >            
-            Login
-          </Button>
+
+          <MobileCTA />
         </MobileNavMenu>
       </MobileNav>
     </Navbar>
