@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { DiagramProvider } from "@/src/context/DiagramContext";
 
 export default async function Layout({
   children,
@@ -12,10 +13,12 @@ export default async function Layout({
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar />
-      <SidebarTrigger />
-      <main className="flex w-[95%] mx-auto  pr-8 pl-2 py-6">{children}</main>
-    </SidebarProvider>
+    <DiagramProvider>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar />
+        <SidebarTrigger />
+        <main className="flex w-[95%] mx-auto  pr-8 pl-2 py-6">{children}</main>
+      </SidebarProvider>
+    </DiagramProvider>
   );
 }
