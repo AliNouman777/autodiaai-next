@@ -59,10 +59,9 @@ export default function CreateDiagramSheet({
       toast.success("Diagram created!");
       // keep UI in a transition while navigating
       startTransition(() => {
-        router.push(`/diagram/${doc.type}`);
+        router.push(`/diagram/${doc.type}/${doc._id}`);
       });
-      // You can optionally close the sheet immediately
-      setOpen(false);
+      // setOpen(false);
     } catch (err: any) {
       toast.error(err?.message || "Something went wrong.");
     } finally {
