@@ -20,16 +20,11 @@ type Props = React.ComponentProps<"div">;
 
 export function LoginForm({ className, ...props }: Props) {
   const router = useRouter();
-  const { login, loading, user } = useAuth();
+  const { login, loading } = useAuth();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
-
-  // If already logged in, redirect (optional)
-  React.useEffect(() => {
-    if (user) router.replace("/diagram");
-  }, [user, router]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,7 +38,6 @@ export function LoginForm({ className, ...props }: Props) {
   }
 
   function handleGoogleLogin() {
-    // Point to your backend Google OAuth endpoint
     const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
     window.location.href = `${base}/api/auth/oauth/google`;
   }
@@ -56,7 +50,6 @@ export function LoginForm({ className, ...props }: Props) {
           <CardDescription>Login with your Google account</CardDescription>
         </CardHeader>
 
-        {/* ✅ Single real <form> only */}
         <CardContent>
           <form onSubmit={onSubmit} className="grid gap-6">
             <div className="flex flex-col gap-4">
@@ -68,6 +61,7 @@ export function LoginForm({ className, ...props }: Props) {
                 disabled={loading}
                 aria-label="Login with Google"
               >
+                {/* Google SVG */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -149,9 +143,9 @@ export function LoginForm({ className, ...props }: Props) {
         </CardContent>
       </Card>
 
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+      <div className="text-muted-foreground text-center text-xs text-balance underline-offset-4">
+        By clicking continue, you agree to our{" "}
+        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
       </div>
     </div>
   );

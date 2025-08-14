@@ -24,7 +24,7 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
-  const { signup, loading, user } = useAuth();
+  const { signup, loading } = useAuth();
 
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
@@ -32,9 +32,7 @@ export function SignupForm({
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+
 
   const validate = () => {
     const e = email.trim();
