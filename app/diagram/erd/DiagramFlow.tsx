@@ -18,8 +18,11 @@ import {
   type OnConnect,
   type OnEdgesChange,
   type OnNodesChange,
+  type ReactFlowInstance,
+  Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import dagre from "dagre";
 import { Markers } from "@/components/diagramcanvas/markers";
 import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
 import SuperCurvyEdge from "@/components/diagramcanvas/customedges";
@@ -28,7 +31,9 @@ import { useDiagram } from "@/src/context/DiagramContext";
 const nodeTypes = { databaseSchema: CustomERDNode };
 const edgeTypes = { superCurvyEdge: SuperCurvyEdge };
 
-/* --------------------------------- Handles -------------------------------- */
+/* =========================
+   Handle map / sanitization
+========================= */
 
 type HandleMap = Record<
   string,
@@ -39,6 +44,9 @@ type HandleMap = Record<
   }
 >;
 
+/** Build a set of valid handle ids for each node.
+ * Supports both "fieldId-left/right" and "nodeId-fieldId-left/right".
+ */
 function buildHandleMap(nodes: Node[]): HandleMap {
   const map: HandleMap = {};
   for (const n of nodes) {
@@ -46,20 +54,31 @@ function buildHandleMap(nodes: Node[]): HandleMap {
     let defaultLeft: string | null = null;
     let defaultRight: string | null = null;
 
-    // Expect node.data.schema: [{ id, title, type, key? }]
     const schema: any[] =
       (n as any)?.data?.schema ?? (n as any)?.data?.fields ?? [];
 
     if (Array.isArray(schema)) {
       for (const f of schema) {
-        const fid = typeof f?.id === "string" ? f.id.trim() : "";
-        if (!fid) continue;
-        const L = `${fid}-left`;
-        const R = `${fid}-right`;
-        handles.add(L);
-        handles.add(R);
-        if (!defaultLeft) defaultLeft = L;
-        if (!defaultRight) defaultRight = R;
+        const rawId =
+          typeof f?.id === "string" && f.id.trim()
+            ? f.id.trim()
+            : typeof f?.fieldId === "string" && f.fieldId.trim()
+            ? f.fieldId.trim()
+            : "";
+        if (!rawId) continue;
+
+        const plainL = `${rawId}-left`;
+        const plainR = `${rawId}-right`;
+        const prefL = `${n.id}-${rawId}-left`;
+        const prefR = `${n.id}-${rawId}-right`;
+
+        handles.add(plainL);
+        handles.add(plainR);
+        handles.add(prefL);
+        handles.add(prefR);
+
+        if (!defaultLeft) defaultLeft = prefL;
+        if (!defaultRight) defaultRight = prefR;
       }
     }
 
@@ -86,10 +105,7 @@ function coerceEdge(e: any): Edge {
   } as Edge;
 }
 
-/**
- * IMPORTANT: We only connect edges to *existing* field handles.
- * If a node has no field handles -> we drop the edge (don't guess "1-left/right").
- */
+/** Enforce that edges connect to **existing** field handles. */
 function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
   const map = buildHandleMap(nodes);
   const fixed: Edge[] = [];
@@ -99,28 +115,25 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
     const e = coerceEdge(raw);
     const src = map[e.source];
     const tgt = map[e.target];
-
-    // must reference existing nodes
     if (!src || !tgt) continue;
 
-    // if either side has no handles, drop the edge
     if (src.all.size === 0 || tgt.all.size === 0) {
       if (!warned && process.env.NODE_ENV !== "production") {
         console.warn(
-          "[DiagramFlow] Dropping edges that reference nodes without field handles. " +
-            "Ensure node.data.schema has fields with 'id' so handles like '<fieldId>-left/right' exist."
+          "[DiagramFlow] Dropping edges referencing nodes without field handles."
         );
         warned = true;
       }
       continue;
     }
 
-    // choose valid handles (prefer the provided ones if valid, else fall back)
-    const srcHandleValid = e.sourceHandle && src.all.has(e.sourceHandle);
-    const tgtHandleValid = e.targetHandle && tgt.all.has(e.targetHandle);
+    const srcValid = !!(e.sourceHandle && src.all.has(e.sourceHandle));
+    const tgtValid = !!(e.targetHandle && tgt.all.has(e.targetHandle));
 
-    const sourceHandle = srcHandleValid ? e.sourceHandle! : src.defaultRight!;
-    const targetHandle = tgtHandleValid ? e.targetHandle! : tgt.defaultLeft!;
+    const sourceHandle = srcValid ? e.sourceHandle! : src.defaultRight!;
+    const targetHandle = tgtValid ? e.targetHandle! : tgt.defaultLeft!;
+
+    if (!sourceHandle || !targetHandle) continue;
 
     fixed.push({
       ...e,
@@ -132,15 +145,91 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
       data: e.data ?? {},
     });
   }
-
   return fixed;
 }
 
-/* -------------------------- Flip helpers (unchanged) ----------------------- */
+/* ===============
+   Dagre layout
+=============== */
+
+const DEFAULT_NODE_W = 260;
+const DEFAULT_NODE_H = 120;
+
+type RankDir = "LR" | "TB";
+
+function layoutWithDagre(
+  nodes: Node[],
+  edges: Edge[],
+  direction: RankDir = "LR"
+): Node[] {
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({
+    rankdir: direction, // "LR" left->right, "TB" top->bottom
+    nodesep: 40,
+    ranksep: 80,
+    edgesep: 20,
+    marginx: 20,
+    marginy: 20,
+  });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  // Use known/measured size if present; otherwise a safe default
+  nodes.forEach((n) => {
+    const width =
+      (n as any).width ??
+      (typeof (n as any)?.style?.width === "number"
+        ? (n as any).style.width
+        : DEFAULT_NODE_W);
+    const height =
+      (n as any).height ??
+      (typeof (n as any)?.style?.height === "number"
+        ? (n as any).style.height
+        : DEFAULT_NODE_H);
+
+    g.setNode(n.id, { width, height });
+  });
+
+  edges.forEach((e) => g.setEdge(e.source, e.target));
+
+  dagre.layout(g);
+
+  // Place each node at Dagre's computed center minus half width/height
+  return nodes.map((n) => {
+    const { x, y } = g.node(n.id) || { x: 0, y: 0 };
+    const width =
+      (n as any).width ??
+      (typeof (n as any)?.style?.width === "number"
+        ? (n as any).style.width
+        : DEFAULT_NODE_W);
+    const height =
+      (n as any).height ??
+      (typeof (n as any)?.style?.height === "number"
+        ? (n as any).style.height
+        : DEFAULT_NODE_H);
+
+    // Hint to edges about preferred connection sides
+    const horizontal = direction === "LR";
+    const sourcePosition = horizontal ? Position.Right : Position.Bottom;
+    const targetPosition = horizontal ? Position.Left : Position.Top;
+
+    return {
+      ...n,
+      position: { x: x - width / 2, y: y - height / 2 },
+      sourcePosition,
+      targetPosition,
+      // prevent Dagre positions from being overridden by RF initial auto-positioning
+      draggable: true,
+    };
+  });
+}
+
+/* =========================
+   Flip helpers (unchanged)
+========================= */
 
 function getNodeCenter(node: any): [number, number] {
-  const width = node.width ?? 150;
-  const height = node.height ?? 50;
+  const width = node.width ?? DEFAULT_NODE_W;
+  const height = node.height ?? DEFAULT_NODE_H;
   return [node.position.x + width / 2, node.position.y + height / 2];
 }
 function flipMarkerName(name: string) {
@@ -156,48 +245,54 @@ function flipHandleId(handleId?: string) {
   return handleId;
 }
 
-/* --------------------------------- Component -------------------------------- */
+/* =========================
+   Component
+========================= */
 
 type Props = {
-  diagramId?: string;
-  initialNodes: Node[];
-  initialEdges: Edge[];
+  nodes: Node[];
+  edges: Edge[];
+  layout?: RankDir; // "LR" or "TB" (default LR)
 };
 
-const DiagramFlow: React.FC<Props> = ({
-  diagramId,
-  initialNodes,
-  initialEdges,
-}) => {
+const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
   const { diagramRef, setReactFlowInstance } = useDiagram();
 
-  // sanitize once for initial props
-  const saneInitialEdges = useMemo(
-    () => sanitizeEdges(initialEdges ?? [], initialNodes ?? []),
-    [initialEdges, initialNodes]
+  // React Flow instance for fitView after layout
+  const rfRef = useRef<ReactFlowInstance | null>(null);
+  const onInit = useCallback(
+    (inst: ReactFlowInstance) => {
+      rfRef.current = inst;
+      setReactFlowInstance(inst);
+      inst.fitView({ padding: 0.2 });
+    },
+    [setReactFlowInstance]
   );
 
-  const [nodes, setNodes] = useState<Node[]>(initialNodes ?? []);
-  const [edges, setEdges] = useState<Edge[]>(saneInitialEdges);
+  // Local interactive state
+  const [nodesState, setNodesState] = useState<Node[]>([]);
+  const [edgesState, setEdgesState] = useState<Edge[]>([]);
 
-  // sync on prop changes
+  // Recompute layout whenever parent sends a new graph
   useEffect(() => {
-    setNodes(initialNodes ?? []);
-  }, [initialNodes]);
+    const sanitized = sanitizeEdges(edges ?? [], nodes ?? []);
+    const laidOut = layoutWithDagre(nodes ?? [], sanitized, layout);
+    setNodesState(laidOut);
+    setEdgesState(sanitized);
 
-  useEffect(() => {
-    setEdges(sanitizeEdges(initialEdges ?? [], initialNodes ?? []));
-  }, [initialEdges, initialNodes]);
+    // ensure the new layout is visible
+    requestAnimationFrame(() => rfRef.current?.fitView({ padding: 0.2 }));
+  }, [nodes, edges, layout]);
 
-  // hover state
+  // Hover state
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  const handleNodesChange: OnNodesChange = useCallback((changes) => {
-    setNodes((nds) => {
+  const onNodesChange: OnNodesChange = useCallback((changes) => {
+    setNodesState((nds) => {
       const updatedNodes = applyNodeChanges(changes, nds);
 
-      // keep your flip logic
-      setEdges((currentEdges) => {
+      // Keep your horizontal flip logic
+      setEdgesState((currentEdges) => {
         let updatedEdges = [...currentEdges];
 
         changes.forEach((change) => {
@@ -254,22 +349,22 @@ const DiagramFlow: React.FC<Props> = ({
   }, []);
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes) => setEdgesState((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
   const onConnect: OnConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdgesState((eds) => addEdge(params, eds)),
     []
   );
 
-  // derive hover decorations
+  // Derived hover decorations
   const connectedEdges = useMemo(() => {
     if (!hoveredNodeId) return [];
-    return edges.filter(
+    return edgesState.filter(
       (e) => e.source === hoveredNodeId || e.target === hoveredNodeId
     );
-  }, [edges, hoveredNodeId]);
+  }, [edgesState, hoveredNodeId]);
 
   const connectedNodeIds = useMemo(() => {
     const ids = new Set<string>();
@@ -281,7 +376,7 @@ const DiagramFlow: React.FC<Props> = ({
 
   const nodesWithHover = useMemo(
     () =>
-      nodes.map((n) => ({
+      nodesState.map((n) => ({
         ...n,
         data: {
           ...n.data,
@@ -291,7 +386,7 @@ const DiagramFlow: React.FC<Props> = ({
           isConnected: connectedNodeIds.has(n.id),
         },
       })),
-    [nodes, hoveredNodeId, connectedNodeIds]
+    [nodesState, hoveredNodeId, connectedNodeIds]
   );
 
   const connectedEdgeIds = useMemo(
@@ -301,7 +396,7 @@ const DiagramFlow: React.FC<Props> = ({
 
   const edgesWithHover = useMemo(
     () =>
-      edges.map((e) => ({
+      edgesState.map((e) => ({
         ...e,
         animated: connectedEdgeIds.has(e.id),
         data: {
@@ -310,7 +405,7 @@ const DiagramFlow: React.FC<Props> = ({
           hoveredNodeId,
         },
       })),
-    [edges, connectedEdgeIds, hoveredNodeId]
+    [edgesState, connectedEdgeIds, hoveredNodeId]
   );
 
   return (
@@ -320,10 +415,10 @@ const DiagramFlow: React.FC<Props> = ({
         edges={edgesWithHover}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodesChange={handleNodesChange}
         onConnect={onConnect}
-        onInit={setReactFlowInstance}
+        onInit={onInit}
         fitView
       >
         <Background />

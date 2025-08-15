@@ -117,6 +117,7 @@ export type Model =
   | "gpt-5"
   | "gpt-5-mini"
   | "gemini-2.5-flash"
+  | "openai/gpt-oss-20b:free"
   | "gemini-2.5-flash-lite";
 
 export type Diagram = {

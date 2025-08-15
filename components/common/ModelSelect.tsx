@@ -10,14 +10,13 @@ import {
 } from "@/components/ui/select";
 
 export type CanonicalModel =
-  | "gpt-5"
-  | "gpt-5-mini"
+  | "openai/gpt-oss-20b:free"
   | "gemini-2.5-flash"
-  | "gemini-2.5-flash-lite";
+  | "gemini-2.5-flash-lite"
+  | "deepseek/deepseek-chat-v3-0324:free";
 
 const OPTIONS: { value: CanonicalModel; label: string }[] = [
-  { value: "gpt-5", label: "GPT-5" },
-  { value: "gpt-5-mini", label: "GPT-5 mini" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "Deepseek V3" },
   { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
   { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite" },
 ];

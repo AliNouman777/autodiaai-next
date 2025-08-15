@@ -6,6 +6,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
+		"@dagrejs/dagre": "^1.1.5",
 		"@radix-ui/react-dialog": "^1.1.14",
 		"@radix-ui/react-label": "^2.1.7",
 		"@radix-ui/react-select": "^2.2.5",
@@ -18,6 +19,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"compromise": "^14.14.4",
+		"dagre": "^0.8.5",
 		"framer-motion": "^12.23.12",
 		"html-to-image": "^1.11.13",
 		"lucide-react": "^0.536.0",
