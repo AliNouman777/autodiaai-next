@@ -21,6 +21,14 @@ type DiagramContextType = {
   isExporting: boolean;
 };
 
+type SqlDialect = "postgres" | "mysql" | "sqlite";
+
+type ExportOptions = {
+  dialect: SqlDialect;
+  schema?: string; // for Postgres (optional)
+  filename?: string; // desired filename without extension
+};
+
 type DiagramApiContextType = {
   creating: boolean;
   updating: boolean;
@@ -35,6 +43,10 @@ type DiagramApiContextType = {
   updateDiagram: (id: string, body: UpdateDiagramBody) => Promise<Diagram>;
   deleteDiagram: (id: string) => Promise<void>;
   getDiagram: (id: string) => Promise<Diagram>;
+  exportSQL: (
+    id: string,
+    opts: ExportOptions
+  ) => Promise<{ blob: Blob; filename: string }>;
 };
 
 // ===== Helpers =====
@@ -160,6 +172,53 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
     [run]
   );
 
+  const exportSQL = useCallback(
+    async (
+      id: string,
+      opts: ExportOptions
+    ): Promise<{ blob: Blob; filename: string }> => {
+      const params = new URLSearchParams();
+      params.set("dialect", opts.dialect);
+      if (opts.schema) params.set("schema", opts.schema);
+      if (opts.filename) params.set("filename", opts.filename);
+      const baseUrlRef =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const url = `${baseUrlRef}/api/diagrams/${id}/export.sql?${params.toString()}`;
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        throw new Error(`Export failed: ${res.status} ${t}`);
+      }
+
+      const blob = await res.blob();
+
+      // Try to read filename from Content-Disposition
+      let filename = `${opts.filename || "diagram"}.sql`;
+      const dispo =
+        res.headers.get("Content-Disposition") ||
+        res.headers.get("content-disposition");
+      if (dispo) {
+        const m = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(dispo);
+        if (m?.[1]) {
+          try {
+            filename = decodeURIComponent(m[1].replace(/"/g, ""));
+          } catch {
+            filename = m[1].replace(/"/g, "");
+          }
+        }
+      }
+
+      // If server didn’t set, fallback to query-provided name
+      if (!filename.endsWith(".sql")) filename += ".sql";
+      return { blob, filename };
+    },
+    []
+  );
+
   const apiValue = useMemo(
     () => ({
       creating,
@@ -172,6 +231,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       updateDiagram,
       deleteDiagram,
       getDiagram,
+      exportSQL,
     }),
     [
       creating,
@@ -184,6 +244,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       updateDiagram,
       deleteDiagram,
       getDiagram,
+      exportSQL,
     ]
   );
 
@@ -229,6 +290,12 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
 export function useDiagram() {
   const ctx = useContext(DiagramContext);
   if (!ctx) throw new Error("useDiagram must be used inside DiagramProvider");
+  return ctx;
+}
+
+export function useExportSql() {
+  const ctx = useContext(DiagramApiContext);
+  if (!ctx) throw new Error("useExportSql must be used inside DiagramProvider");
   return ctx;
 }
 

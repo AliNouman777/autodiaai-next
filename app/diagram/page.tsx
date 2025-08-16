@@ -3,7 +3,6 @@ import React, { Suspense } from "react";
 import Table from "@/components/common/table";
 import { TableSkeleton } from "@/components/skeleton/TableSkeleton";
 import CreateDiagramSheet from "@/components/common/CreateDiagramSheet";
-import RequireAuth from "@/components/RequireAuth";
 import AuthWrapper from "@/components/Auth/AuthWrapper";
 
 export default function Page() {

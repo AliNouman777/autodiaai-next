@@ -5,14 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
-import { useDiagram } from "@/src/context/DiagramContext";
 import {
-  ModelSelect,
-  type CanonicalModel,
-} from "@/components/common/ModelSelect";
+  useDiagram,
+  useDiagramApi,
+  useExportSql,
+} from "@/src/context/DiagramContext";
+import { AppSelect } from "@/components/common/AppSelect";
 import { Tabs } from "@/components/ui/tabs";
 import StatefulButton from "@/components/common/StatefulButton";
 import { toast } from "react-hot-toast";
+
+// ---- Canonical Model Types ----
+type CanonicalModel = "gemini-2.5-flash" | "gemini-2.5-flash-lite";
+
+const MODEL_OPTIONS = [
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite" },
+] as const;
+
+type SqlDialect = "postgres" | "mysql" | "sqlite";
+const DIALECT_OPTIONS = [
+  { value: "postgres", label: "Postgres" },
+  { value: "mysql", label: "MySQL" },
+  { value: "sqlite", label: "SQLite" },
+] as const;
 
 /* =======================
    Reusable Form Panel (presentational)
@@ -44,9 +60,8 @@ function DiagramFormPanel({
   const [localBusy, setLocalBusy] = useState<boolean>(false);
   const [currentTitle, setCurrentTitle] = useState<string>(defaultTitle ?? "");
   const [description, setDescription] = useState<string>(defaultDescription);
-  const [model, setModel] = useState<CanonicalModel>(
-    "deepseek/deepseek-chat-v3-0324:free"
-  );
+  const [renameBusy, setRenameBusy] = useState<boolean>(false);
+  const [model, setModel] = useState<CanonicalModel>("gemini-2.5-flash");
 
   useEffect(() => {
     setDescription(defaultDescription ?? "");
@@ -74,12 +89,12 @@ function DiagramFormPanel({
       return;
     }
     try {
-      setLocalBusy(true);
-      await onSubmit(nextTitle); // parent handles API + state
+      setRenameBusy(true);
+      await onSubmit(nextTitle);
       setCurrentTitle(nextTitle);
       setIsEditing(false);
     } finally {
-      setLocalBusy(false);
+      setRenameBusy(false);
     }
   };
 
@@ -140,10 +155,10 @@ function DiagramFormPanel({
               Cancel
             </Button>
             <Button
-              className="px-5 font-bold border text-xs rounded-md"
+              className="px-5 font-bold border text-xs rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
               onClick={handleSaveTitle}
-              disabled={localBusy}
+              disabled={renameBusy}
             >
               Save
             </Button>
@@ -160,10 +175,10 @@ function DiagramFormPanel({
           onChange={(e) => {
             const text = e.target.value;
             const words = text.trim() === "" ? [] : text.trim().split(/\s+/);
-            if (words.length <= 100) setDescription(text);
+            if (words.length <= 250) setDescription(text);
           }}
         />
-        <p className="text-sm text-gray-500 mt-1">{wordCount}/100</p>
+        <p className="text-sm text-gray-500 mt-1">{wordCount}/250</p>
       </div>
 
       {/* Action + Model */}
@@ -189,8 +204,13 @@ function DiagramFormPanel({
           )}
         </Button>
 
-        <div className="mt-4 flex w-full md:w-35">
-          <ModelSelect value={model} onChange={setModel} />
+        <div className="mt-4 flex w-full md:w-40 ">
+          <AppSelect<CanonicalModel>
+            value={model}
+            onChange={setModel}
+            options={MODEL_OPTIONS}
+            placeholder="Select Model"
+          />
         </div>
       </div>
     </div>
@@ -200,27 +220,99 @@ function DiagramFormPanel({
 /* =======================
    Export Panel (presentational)
 ======================= */
-function ExportPanel() {
+function ExportPanel({
+  diagramId,
+  defaultTitle,
+}: {
+  diagramId: string;
+  defaultTitle?: string;
+}) {
   const { exportPNG } = useDiagram();
+  const { exportSQL } = useExportSql();
+
+  const [dialect, setDialect] = useState<SqlDialect>("postgres");
+  const [filename, setFilename] = useState<string>(
+    defaultTitle || "Untitled Diagram"
+  );
+  const [busy, setBusy] = useState(false);
+
+  const handleExportSql = async () => {
+    try {
+      setBusy(true);
+      const { blob, filename: serverFilename } = await exportSQL(diagramId, {
+        dialect,
+        filename,
+      });
+
+      // Download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = serverFilename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="w-full overflow-hidden relative h-full rounded-2xl text-gray-700 border-2 bg-white p-4 flex flex-col gap-6">
       <h2 className="text-lg font-semibold">Export Your Diagram</h2>
+
       <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 w-full justify-between">
+          <label className="text-sm font-medium">SQL Dialect</label>
+          <AppSelect<SqlDialect>
+            value={dialect}
+            onChange={setDialect}
+            options={DIALECT_OPTIONS}
+            placeholder="Choose dialect"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 md:col-span-2">
+          <label className="text-sm font-medium">File name</label>
+          <Input
+            value={filename}
+            onChange={(e) => setFilename(e.target.value)}
+            placeholder="diagram"
+          />
+          <p className="text-xs text-muted-foreground">
+            The <code>.sql</code> extension will be added automatically.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Button
+          disabled={busy}
+          onClick={handleExportSql}
+          className="bg-purple-400 text-lg cursor-pointer hover:bg-purple-600 text-white py-5 rounded-md font-medium disabled:opacity-60"
+        >
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <Spinner className="h-4 w-4" /> Exporting SQL…
+            </span>
+          ) : (
+            "Save as SQL"
+          )}
+        </Button>
+
         <StatefulButton
           label="Save as PNG"
           onAction={exportPNG}
-          className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-md font-medium"
+          className="bg-blue-500 hover:bg-blue-600 text-white text-lg py-3 rounded-md font-medium"
         />
-        <Button
-          className="bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-md font-medium"
-          onClick={() => {}}
-        >
-          Save as SQL
-        </Button>
       </div>
-      <p className="text-sm text-gray-500 mt-4">
-        Choose a format to download your ERD. PNG will save the diagram image,
-        SQL will save a generated schema.
+
+      <p className="text-sm text-gray-500 mt-2">
+        Choose a format to download your ERD. PNG will save the diagram image;
+        SQL will generate a schema based on your diagram.
       </p>
     </div>
   );
@@ -293,7 +385,7 @@ export function TextTab({
     {
       title: "Export",
       value: "export",
-      content: <ExportPanel />,
+      content: <ExportPanel diagramId={diagramId} defaultTitle={title} />,
     },
   ];
 

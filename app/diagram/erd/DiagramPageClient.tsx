@@ -67,10 +67,10 @@ const DiagramPageClient: React.FC = () => {
     const body: UpdateDiagramBody = {};
     if (typeof newTitle === "string") {
       body.title = newTitle;
-      body.name = newTitle; // keep 'name' in sync with title
     }
     if (typeof newPrompt === "string") body.prompt = newPrompt;
     if (typeof model === "string") body.model = model as any;
+
 
     // No-op if nothing provided
     if (Object.keys(body).length === 0) return;
