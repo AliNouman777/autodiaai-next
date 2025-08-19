@@ -1,4 +1,5 @@
 "use client";
+
 import React, {
   useCallback,
   useEffect,
@@ -19,15 +20,36 @@ import {
   type OnEdgesChange,
   type OnNodesChange,
   type ReactFlowInstance,
-  Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import dagre from "dagre";
 import { Markers } from "@/components/diagramcanvas/markers";
 import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
 import SuperCurvyEdge from "@/components/diagramcanvas/customedges";
 import { useDiagram } from "@/src/context/DiagramContext";
+import { useParams, usePathname } from "next/navigation";
+import { HandleMap, Props, RankDir } from "@/types/flowdiagram";
+import {
+  ArrowUpDown,
+  ArrowLeftRight,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Download,
+  RotateCcw,
+} from "lucide-react";
 
+// 🔁 Layout utilities moved to dagreLayout.ts
+import {
+  layoutWithDagre,
+  getNodeSize,
+  DEFAULT_NODE_W,
+  DEFAULT_NODE_H,
+} from "./dagreLayout";
+
+// Your compact FloatingDock (supports onClick/actions)
+import { FloatingDock } from "@/components/ui/floating-dock";
+
+/* -------------------- Node/edge renderers -------------------- */
 const nodeTypes = { databaseSchema: CustomERDNode };
 const edgeTypes = { superCurvyEdge: SuperCurvyEdge };
 
@@ -35,18 +57,6 @@ const edgeTypes = { superCurvyEdge: SuperCurvyEdge };
    Handle map / sanitization
 ========================= */
 
-type HandleMap = Record<
-  string,
-  {
-    all: Set<string>;
-    defaultLeft: string | null;
-    defaultRight: string | null;
-  }
->;
-
-/** Build a set of valid handle ids for each node.
- * Supports both "fieldId-left/right" and "nodeId-fieldId-left/right".
- */
 function buildHandleMap(nodes: Node[]): HandleMap {
   const map: HandleMap = {};
   for (const n of nodes) {
@@ -105,11 +115,10 @@ function coerceEdge(e: any): Edge {
   } as Edge;
 }
 
-/** Enforce that edges connect to **existing** field handles. */
+/** Enforce that edges connect to existing field handles. */
 function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
   const map = buildHandleMap(nodes);
   const fixed: Edge[] = [];
-  let warned = false;
 
   for (const raw of rawEdges ?? []) {
     const e = coerceEdge(raw);
@@ -117,15 +126,7 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
     const tgt = map[e.target];
     if (!src || !tgt) continue;
 
-    if (src.all.size === 0 || tgt.all.size === 0) {
-      if (!warned && process.env.NODE_ENV !== "production") {
-        console.warn(
-          "[DiagramFlow] Dropping edges referencing nodes without field handles."
-        );
-        warned = true;
-      }
-      continue;
-    }
+    if (src.all.size === 0 || tgt.all.size === 0) continue;
 
     const srcValid = !!(e.sourceHandle && src.all.has(e.sourceHandle));
     const tgtValid = !!(e.targetHandle && tgt.all.has(e.targetHandle));
@@ -148,83 +149,8 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
   return fixed;
 }
 
-/* ===============
-   Dagre layout
-=============== */
-
-const DEFAULT_NODE_W = 260;
-const DEFAULT_NODE_H = 120;
-
-type RankDir = "LR" | "TB";
-
-function layoutWithDagre(
-  nodes: Node[],
-  edges: Edge[],
-  direction: RankDir = "LR"
-): Node[] {
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({
-    rankdir: direction, // "LR" left->right, "TB" top->bottom
-    nodesep: 40,
-    ranksep: 80,
-    edgesep: 20,
-    marginx: 20,
-    marginy: 20,
-  });
-  g.setDefaultEdgeLabel(() => ({}));
-
-  // Use known/measured size if present; otherwise a safe default
-  nodes.forEach((n) => {
-    const width =
-      (n as any).width ??
-      (typeof (n as any)?.style?.width === "number"
-        ? (n as any).style.width
-        : DEFAULT_NODE_W);
-    const height =
-      (n as any).height ??
-      (typeof (n as any)?.style?.height === "number"
-        ? (n as any).style.height
-        : DEFAULT_NODE_H);
-
-    g.setNode(n.id, { width, height });
-  });
-
-  edges.forEach((e) => g.setEdge(e.source, e.target));
-
-  dagre.layout(g);
-
-  // Place each node at Dagre's computed center minus half width/height
-  return nodes.map((n) => {
-    const { x, y } = g.node(n.id) || { x: 0, y: 0 };
-    const width =
-      (n as any).width ??
-      (typeof (n as any)?.style?.width === "number"
-        ? (n as any).style.width
-        : DEFAULT_NODE_W);
-    const height =
-      (n as any).height ??
-      (typeof (n as any)?.style?.height === "number"
-        ? (n as any).style.height
-        : DEFAULT_NODE_H);
-
-    // Hint to edges about preferred connection sides
-    const horizontal = direction === "LR";
-    const sourcePosition = horizontal ? Position.Right : Position.Bottom;
-    const targetPosition = horizontal ? Position.Left : Position.Top;
-
-    return {
-      ...n,
-      position: { x: x - width / 2, y: y - height / 2 },
-      sourcePosition,
-      targetPosition,
-      // prevent Dagre positions from being overridden by RF initial auto-positioning
-      draggable: true,
-    };
-  });
-}
-
 /* =========================
-   Flip helpers (unchanged)
+   Small helpers
 ========================= */
 
 function getNodeCenter(node: any): [number, number] {
@@ -249,40 +175,62 @@ function flipHandleId(handleId?: string) {
    Component
 ========================= */
 
-type Props = {
-  nodes: Node[];
-  edges: Edge[];
-  layout?: RankDir; // "LR" or "TB" (default LR)
-};
+const DiagramFlow: React.FC<Props> = ({
+  nodes,
+  edges,
+  layout = "LR",
+  diagramId,
+}) => {
+  const { diagramRef, setReactFlowInstance, exportPNG, isExporting } =
+    useDiagram();
 
-const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
-  const { diagramRef, setReactFlowInstance } = useDiagram();
+  // Resolve diagramId: prefer prop -> route param -> pathname match
+  const params = useParams() as any;
+  const pathname = usePathname() || "";
+  const idFromParam = params?.id as string | undefined;
+  const idFromPath = useMemo(() => {
+    const m = pathname.match(/\/diagram\/[^/]+\/([^/]+)/i);
+    return m?.[1];
+  }, [pathname]);
+  const resolvedDiagramId = diagramId || idFromParam || idFromPath || "";
 
-  // React Flow instance for fitView after layout
+  useEffect(() => {
+    if (!resolvedDiagramId) {
+      console.warn(
+        "[DiagramFlow] diagramId is missing; CustomERDNode API calls will fail."
+      );
+    }
+  }, [resolvedDiagramId]);
+
+  // React Flow instance
   const rfRef = useRef<ReactFlowInstance | null>(null);
   const onInit = useCallback(
     (inst: ReactFlowInstance) => {
       rfRef.current = inst;
       setReactFlowInstance(inst);
-      inst.fitView({ padding: 0.2 });
+      inst.fitView({ padding: 0.15 });
     },
     [setReactFlowInstance]
   );
 
-  // Local interactive state
+  // Local state
   const [nodesState, setNodesState] = useState<Node[]>([]);
   const [edgesState, setEdgesState] = useState<Edge[]>([]);
+  const [layoutDir, setLayoutDir] = useState<RankDir>(layout);
 
-  // Recompute layout whenever parent sends a new graph
+  // Recompute layout whenever inputs or layoutDir change
   useEffect(() => {
     const sanitized = sanitizeEdges(edges ?? [], nodes ?? []);
-    const laidOut = layoutWithDagre(nodes ?? [], sanitized, layout);
+    const sized = (nodes ?? []).map((n) => {
+      const { width, height } = getNodeSize(n as any);
+      return { ...n, width, height };
+    });
+    const laidOut = layoutWithDagre(sized, sanitized, layoutDir);
     setNodesState(laidOut);
     setEdgesState(sanitized);
-
-    // ensure the new layout is visible
-    requestAnimationFrame(() => rfRef.current?.fitView({ padding: 0.2 }));
-  }, [nodes, edges, layout]);
+    requestAnimationFrame(() => rfRef.current?.fitView({ padding: 0.15 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, layoutDir]);
 
   // Hover state
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -291,7 +239,6 @@ const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
     setNodesState((nds) => {
       const updatedNodes = applyNodeChanges(changes, nds);
 
-      // Keep your horizontal flip logic
       setEdgesState((currentEdges) => {
         let updatedEdges = [...currentEdges];
 
@@ -353,10 +300,9 @@ const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
     []
   );
 
-  const onConnect: OnConnect = useCallback(
-    (params) => setEdgesState((eds) => addEdge(params, eds)),
-    []
-  );
+  const onConnect: OnConnect = useCallback((params) => {
+    setEdgesState((eds) => addEdge(params, eds));
+  }, []);
 
   // Derived hover decorations
   const connectedEdges = useMemo(() => {
@@ -374,19 +320,21 @@ const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
     return ids;
   }, [connectedEdges, hoveredNodeId]);
 
+  // Inject diagramId + hover flags into each node
   const nodesWithHover = useMemo(
     () =>
       nodesState.map((n) => ({
         ...n,
         data: {
           ...n.data,
+          diagramId: resolvedDiagramId,
           onNodeHover: () => setHoveredNodeId(n.id),
           onNodeUnhover: () => setHoveredNodeId(null),
           isHovered: hoveredNodeId === n.id,
           isConnected: connectedNodeIds.has(n.id),
         },
       })),
-    [nodesState, hoveredNodeId, connectedNodeIds]
+    [nodesState, hoveredNodeId, connectedNodeIds, resolvedDiagramId]
   );
 
   const connectedEdgeIds = useMemo(
@@ -408,8 +356,72 @@ const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
     [edgesState, connectedEdgeIds, hoveredNodeId]
   );
 
+  /* ------------------------- Layout + controller actions ------------------------- */
+  const applyLayout = useCallback(
+    (dir: RankDir) => {
+      setLayoutDir(dir);
+      setNodesState((curr) => layoutWithDagre(curr, edgesState, dir));
+      requestAnimationFrame(() => rfRef.current?.fitView({ padding: 0.15 }));
+    },
+    [edgesState]
+  );
+
+  const fitViewNow = useCallback(() => {
+    rfRef.current?.fitView?.({ padding: 0.15 });
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const cur = rfRef.current?.getViewport?.().zoom ?? 1;
+    const next = Math.max(0.1, Math.min(4, cur + delta));
+    rfRef.current?.zoomTo?.(next);
+  }, []);
+
+  /* ------------------------- UI ------------------------- */
   return (
-    <div className="w-full h-full bg-gray-100" ref={diagramRef}>
+    <div className="relative w-full h-full bg-gray-100">
+      {/* Floating controller dock (centered bottom on desktop, bottom-right on mobile) */}
+      <div data-export-exclude="true">
+        <FloatingDock
+          items={[
+            {
+              title: "Zoom Out",
+              icon: <ZoomOut className="w-4 h-4" />,
+              onClick: () => zoomBy(-0.2),
+            },
+            {
+              title: "Fit View",
+              icon: <Maximize2 className="w-4 h-4" />,
+              onClick: fitViewNow,
+            },
+            {
+              title: "Zoom In",
+              icon: <ZoomIn className="w-4 h-4" />,
+              onClick: () => zoomBy(+0.2),
+            },
+            {
+              title: isExporting ? "Exporting…" : "Export PNG",
+              icon: <Download className="w-4 h-4" />,
+              onClick: () => exportPNG(),
+              active: isExporting,
+            },
+            {
+              title: "Horizontal layout",
+              icon: <ArrowLeftRight className="w-4 h-4" />,
+              onClick: () => applyLayout("LR"),
+              active: layoutDir === "LR",
+            },
+            {
+              title: "Vertical layout",
+              icon: <ArrowUpDown className="w-4 h-4" />,
+              onClick: () => applyLayout("TB"),
+              active: layoutDir === "TB",
+            },
+          ]}
+          desktopClassName="absolute bottom-2 inset-x-0 mx-auto w-fit z-30"
+          mobileClassName="fixed bottom-4 right-4 z-30"
+        />
+      </div>
+
       <ReactFlow
         nodes={nodesWithHover}
         edges={edgesWithHover}
@@ -420,9 +432,9 @@ const DiagramFlow: React.FC<Props> = ({ nodes, edges, layout = "LR" }) => {
         onConnect={onConnect}
         onInit={onInit}
         fitView
+        ref={diagramRef}
       >
         <Background />
-        <Controls />
         <Markers color={hoveredNodeId ? "#0042ff" : "#666"} />
       </ReactFlow>
     </div>

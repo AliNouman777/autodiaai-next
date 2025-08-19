@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Table,
@@ -12,13 +12,16 @@ import {
 } from "@/components/ui/table";
 import DeleteDialog from "./DeleteDialog";
 import { useDiagramApi } from "@/src/context/DiagramContext";
+import { Spinner } from "@/src/components/ui/shadcn-io/spinner"; // ⬅️ import your Spinner
 
 const AnimatedTable = () => {
   const router = useRouter();
   const { diagrams, fetching, listDiagrams } = useDiagramApi();
 
+  // show spinner while redirecting
+  const [navigating, setNavigating] = useState(false);
+
   useEffect(() => {
-    // load on mount
     listDiagrams().catch(() => {});
   }, [listDiagrams]);
 
@@ -31,8 +34,25 @@ const AnimatedTable = () => {
     }
   };
 
+  const handleRowClick = (d: { _id: string; type: string }) => {
+    if (navigating) return; // prevent double clicks
+    setNavigating(true);
+    router.push(`/diagram/${d.type}/${d._id}`);
+  };
+
   return (
-    <div className="w-full rounded-md shadow-xl bg-white border border-slate-100 transition-all duration-300">
+    <div className="relative w-full rounded-md shadow-xl bg-white border border-slate-100 transition-all duration-300">
+      {/* Page overlay spinner while navigating */}
+      {navigating && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-white/70 backdrop-blur-sm"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <Spinner />
+        </div>
+      )}
+
       <Table className="mx-auto">
         <TableHeader>
           <TableRow className="bg-gradient-to-r from-blue-50 to-blue-100">
@@ -95,7 +115,7 @@ const AnimatedTable = () => {
             <TableRow
               key={d._id}
               className="transition-all duration-100 hover:bg-blue-50/60 cursor-pointer"
-              onClick={() => router.push(`/diagram/${d.type}/${d._id}`)}
+              onClick={() => handleRowClick(d)}
             >
               <TableCell className="font-semibold">
                 {d.title || "Untitled"}
@@ -107,7 +127,6 @@ const AnimatedTable = () => {
                 className="text-right"
                 onClick={(e) => e.stopPropagation()} // avoid row navigation when clicking delete
               >
-                {/* Pass id if your dialog expects it */}
                 <DeleteDialog diagramId={d._id} />
               </TableCell>
             </TableRow>
