@@ -12,7 +12,6 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
-import toast from "react-hot-toast";
 
 /* -------------------------------- Types -------------------------------- */
 

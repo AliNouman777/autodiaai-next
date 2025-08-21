@@ -23,6 +23,7 @@ import Logo from "@/public/logo.png";
 import { useAuth } from "@/src/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import ThemeToggle from "../common/ThemeToggle";
 
 export function AppSidebar() {
   const { user, logout, loading } = useAuth();
@@ -43,7 +44,7 @@ export function AppSidebar() {
     <Sidebar className="bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
+          <SidebarGroupLabel className="flex items-center  justify-between">
             <div className="flex space-x-2 my-2">
               <Link href="/" className="flex space-x-2 my-2 cursor-pointer">
                 <Image
@@ -61,6 +62,7 @@ export function AppSidebar() {
                 </div>
               </Link>
             </div>
+            <ThemeToggle />
           </SidebarGroupLabel>
 
           <SidebarGroupContent>

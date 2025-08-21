@@ -3,7 +3,6 @@ import React, { Suspense } from "react";
 import Table from "@/components/common/table";
 import { TableSkeleton } from "@/components/skeleton/TableSkeleton";
 import CreateDiagramSheet from "@/components/common/CreateDiagramSheet";
-import ThemeToggle from "@/components/common/ThemeToggle";
 
 export default function Page() {
   return (
@@ -11,7 +10,6 @@ export default function Page() {
     <div className="w-full gap-3 flex flex-col">
       <div className="flex w-full justify-between items-center">
         <CreateDiagramSheet triggerLabel="Create Diagram" className="w-fit " />
-        <ThemeToggle />
       </div>
       <Suspense fallback={<TableSkeleton rows={5} />}>
         <Table />

@@ -559,7 +559,11 @@ const DiagramFlow: React.FC<Props> = ({
       >
         <Background color="var(--border)" />
 
-        <Markers color={hoveredNodeId ? "#0042ff" : " #fff"} />
+        {/* Force the <defs> to remount when hover state changes to ensure repaint */}
+        <Markers
+          key={hoveredNodeId ? "hover" : "base"}
+          color={hoveredNodeId ? "#0042ff" : undefined} // no leading space
+        />
       </ReactFlow>
     </div>
   );

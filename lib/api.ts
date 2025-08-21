@@ -22,6 +22,17 @@ type ApiOptions = RequestInit & {
   onUnauthorized?: (info: { path: string; status: number }) => void;
 };
 
+export type FeedbackPayload = { name: string; feedback: string };
+export type Feedback = {
+  id?: string; // mongoose virtual id
+  _id?: string; // raw ObjectId (optional, if backend includes it)
+  name: string;
+  feedback?: string; // include only if backend echoes it back
+  message: string; // e.g. "John, thank you for your feedback!"
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 function isFormData(body: unknown): body is FormData {
   return typeof FormData !== "undefined" && body instanceof FormData;
 }
@@ -192,4 +203,12 @@ export const DiagramAPI = {
     api(`/api/diagrams/${id}`, { method: "DELETE" }),
 
   get: (id: string): Promise<Diagram> => api(`/api/diagrams/${id}`),
+};
+
+export const FeedbackAPI = {
+  create: (body: FeedbackPayload): Promise<Feedback> =>
+    api("/api/feedback", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

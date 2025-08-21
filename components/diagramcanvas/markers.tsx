@@ -1,16 +1,22 @@
 // components/diagramcanvas/markers.tsx
 export function Markers({
-  color,
-  background = "var(--marker-bg, var(--background, #fff))", // ← light=white, dark=dark
+  color, // override, e.g. hover blue
+  background = "var(--background)",
 }: {
-  color: string;
+  color?: string;
   background?: string;
 }) {
-  // keep your thickness logic as-is
-  const strokeWidth = color === "#0042ff" ? 1.5 : 1;
+  const strokeWidth = color?.trim() === "#0042ff" ? 1.5 : 1;
+
+  // Use currentColor when no explicit color is provided
+  const svgStyle: React.CSSProperties = {
+    pointerEvents: "none",
+    color: color ? undefined : "var(--marker-stroke)", // theme-driven
+  };
+  const strokeValue = color?.trim() || "currentColor";
 
   return (
-    <svg width="0" height="0" style={{ pointerEvents: "none" }}>
+    <svg width="0" height="0" style={svgStyle}>
       <defs>
         {/* | marker */}
         <marker
@@ -24,7 +30,7 @@ export function Markers({
         >
           <path
             d="M5,0 L5,10"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -41,7 +47,7 @@ export function Markers({
         >
           <path
             d="M5,0 L5,10"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -61,7 +67,7 @@ export function Markers({
           <path
             d="M 10 0 L 0 5 L 10 10"
             fill="none"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -80,7 +86,7 @@ export function Markers({
           <path
             d="M 0 0 L 10 5 L 0 10"
             fill="none"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -99,7 +105,7 @@ export function Markers({
         >
           <path
             d="M5,0 L5,10"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -107,8 +113,8 @@ export function Markers({
             cx="-2"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -126,7 +132,7 @@ export function Markers({
         >
           <path
             d="M5,0 L5,10"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -134,8 +140,8 @@ export function Markers({
             cx="12"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -156,15 +162,15 @@ export function Markers({
             cx="-5"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
           <path
             d="M 10 0 L 0 5 L 10 10"
             fill="none"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -184,15 +190,15 @@ export function Markers({
             cx="15"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
           <path
             d="M 0 0 L 10 5 L 0 10"
             fill="none"
-            stroke={color}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -213,8 +219,8 @@ export function Markers({
             cx="5"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
@@ -234,8 +240,8 @@ export function Markers({
             cx="5"
             cy="5"
             r="4"
-            fill={background}
-            stroke={color}
+            style={{ fill: "var(--background)" }}
+            stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />

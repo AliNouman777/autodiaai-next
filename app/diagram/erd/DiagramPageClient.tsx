@@ -9,7 +9,6 @@ import type { Diagram, UpdateDiagramBody } from "@/lib/api";
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 import toast from "react-hot-toast";
 import FancyProgressLoader from "@/components/common/fancy-progress-loader";
-import ThemeToggle from "@/components/common/ThemeToggle"; // ⬅️ add
 
 const DiagramPageClient: React.FC = () => {
   const params = useParams<{ id: string }>();
@@ -137,11 +136,6 @@ const DiagramPageClient: React.FC = () => {
             flex
           "
         >
-          {/* Theme toggle pinned top-right (above overlays) */}
-          <div className="absolute top-2 right-2 z-50">
-            <ThemeToggle />
-          </div>
-
           {showingInitialLoader ? (
             <div className="flex h-[55vh] sm:h-[60vh] md:h-[68vh] lg:h-full items-center justify-center text-muted-foreground gap-2 grow">
               <Spinner className="h-5 w-5" />
