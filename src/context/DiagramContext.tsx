@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
+import toast from "react-hot-toast";
 
 /* -------------------------------- Types -------------------------------- */
 
@@ -129,6 +130,23 @@ const toServerKey = (k?: KeyKindUI): KeyKindServer => {
   return "NONE";
 };
 
+// Build a normalized Error with status/code/message so UI can toast properly.
+function normalizeError(
+  err: any
+): Error & { status?: number; code?: string; data?: any } {
+  const out = new Error(
+    err?.data?.message ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Something went wrong."
+  ) as Error & { status?: number; code?: string; data?: any };
+
+  out.status = err?.status ?? err?.response?.status;
+  out.code = err?.code ?? err?.response?.data?.code ?? err?.data?.code;
+  out.data = err?.data ?? err?.response?.data;
+  return out;
+}
+
 /* ------------------------------- Contexts ------------------------------ */
 
 const DiagramContext = createContext<DiagramContextType | null>(null);
@@ -162,7 +180,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
         if (isUnauthorized(e)) {
           redirectToLoginWithNext(router);
         }
-        throw e;
+        throw normalizeError(e);
       }
     },
     [router]
@@ -185,10 +203,13 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const createDiagram = useCallback(
-    async (name: string, type: string) => {
+    async (name: string, type: string): Promise<Diagram> => {
       setCreating(true);
       try {
-        return await run(() => DiagramAPI.create({ name, type }));
+        // Ensure your DiagramAPI.create internally sends cookies (credentials: "include")
+        const res = await run(() => DiagramAPI.create({ name, type }));
+
+        return res;
       } finally {
         setCreating(false);
       }
@@ -222,7 +243,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const getDiagram = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<Diagram> => {
       const doc = await run(() => DiagramAPI.get(id));
       // optionally merge into list cache
       setDiagrams((prev) => {
@@ -247,6 +268,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       params.set("dialect", opts.dialect);
       if (opts.schema) params.set("schema", opts.schema);
       if (opts.filename) params.set("filename", opts.filename);
+
       const baseUrlRef =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const url = `${baseUrlRef}/api/diagrams/${id}/export.sql?${params.toString()}`;
@@ -257,7 +279,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (!res.ok) {
         const t = await res.text().catch(() => "");
-        throw new Error(`Export failed: ${res.status} ${t}`);
+        throw normalizeError({
+          status: res.status,
+          message: `Export failed: ${res.status} ${t}`,
+        });
       }
 
       const blob = await res.blob();
@@ -308,7 +333,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`updateNodeLabel failed: ${res.status} ${t}`);
+            throw normalizeError({
+              status: res.status,
+              message: `updateNodeLabel failed: ${res.status} ${t}`,
+            });
           }
         });
       } finally {
@@ -347,7 +375,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`updateField failed: ${res.status} ${t}`);
+            throw normalizeError({
+              status: res.status,
+              message: `updateField failed: ${res.status} ${t}`,
+            });
           }
         });
       } finally {
@@ -375,7 +406,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`deleteField failed: ${res.status} ${t}`);
+            throw normalizeError({
+              status: res.status,
+              message: `deleteField failed: ${res.status} ${t}`,
+            });
           }
         });
       } finally {
@@ -404,7 +438,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`addField failed: ${res.status} ${t}`);
+            throw normalizeError({
+              status: res.status,
+              message: `addField failed: ${res.status} ${t}`,
+            });
           }
         });
       } finally {
@@ -432,7 +469,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`reorderFields failed: ${res.status} ${t}`);
+            throw normalizeError({
+              status: res.status,
+              message: `reorderFields failed: ${res.status} ${t}`,
+            });
           }
         });
       } finally {
@@ -477,7 +517,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       deleteDiagram,
       getDiagram,
       exportSQL,
-
       updateNodeLabel,
       updateField,
       deleteField,
@@ -501,12 +540,11 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
     const clamp = (v: number, min: number, max: number) =>
       Math.max(min, Math.min(max, v));
 
-    // Read the *actual* on-screen bounds of nodes + edge paths
+    // Get the on-screen bbox of nodes + edges
     const getGraphBBox = (root: HTMLElement) => {
       const rootRect = root.getBoundingClientRect();
       const elements = Array.from(
         root.querySelectorAll<HTMLElement>(
-          // nodes + primary edge paths + connection line + edge labels
           ".react-flow__node, .react-flow__edge-path, .react-flow__connectionline, .react-flow__edge-text"
         )
       );
@@ -521,7 +559,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
         maxB = -Infinity;
 
       for (const el of elements) {
-        // Use DOM client rects (already include transforms and stroke width)
         const r = el.getBoundingClientRect();
         minL = Math.min(minL, r.left);
         minT = Math.min(minT, r.top);
@@ -529,7 +566,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
         maxB = Math.max(maxB, r.bottom);
       }
 
-      // Convert page coords -> container-local coords
       const x = minL - rootRect.left;
       const y = minT - rootRect.top;
       const w = maxR - minL;
@@ -538,37 +574,60 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       return { x, y, w, h };
     };
 
+    // Resolve a solid background color for export
+    const resolveExportBg = (el: HTMLElement): string => {
+      // 1) Prefer the effective background-color on this element or ancestors
+      const isTransparent = (c: string) =>
+        !c ||
+        c === "transparent" ||
+        /^rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)$/.test(c);
+
+      let cur: HTMLElement | null = el;
+      while (cur) {
+        const c = getComputedStyle(cur).backgroundColor;
+        if (!isTransparent(c)) return c; // e.g. rgb(...), hsl(...)
+        cur = cur.parentElement;
+      }
+
+      // 2) Try CSS var --background (from your theme tokens)
+      const varBg = getComputedStyle(document.documentElement)
+        .getPropertyValue("--background")
+        .trim();
+      if (varBg) return varBg; // works with hsl()/oklch() in modern browsers
+
+      // 3) Fallback to theme heuristic based on .dark class
+      const isDark = document.documentElement.classList.contains("dark");
+      return isDark ? "#0b0b10" : "#ffffff";
+    };
+
     try {
       setIsExporting(true);
-
-      // Ensure everything is visible and settled
       rfInstance.fitView({ padding: 1 });
       await new Promise((r) => setTimeout(r, 240));
 
       const container = diagramRef.current;
 
-      // 1) Measure DOM bounds
+      // Measure DOM bounds
       const box = getGraphBBox(container);
       let x = Math.max(0, Math.floor(box.x - PAD));
       let y = Math.max(0, Math.floor(box.y - PAD));
       let w = Math.ceil(box.w + PAD * 2);
       let h = Math.ceil(box.h + PAD * 2);
 
-      // 2) Render container to a big canvas, skipping the dock
+      // Theme-aware background for export
+      const exportBg = resolveExportBg(container);
+
+      // Render container to a big canvas, skipping the dock
       const fullCanvas = await htmlToImage.toCanvas(container, {
-        backgroundColor: "white",
+        backgroundColor: exportBg, // ← THE important part
         pixelRatio: EXPORT_SCALE,
         cacheBust: true,
         skipFonts: false,
-        filter: (el) => {
-          // Exclude anything wrapped in data-export-exclude="true"
-          return !(el as HTMLElement)?.closest?.(
-            '[data-export-exclude="true"]'
-          );
-        },
+        filter: (el) =>
+          !(el as HTMLElement)?.closest?.('[data-export-exclude="true"]'),
       } as any);
 
-      // 3) Crop to the measured box (convert CSS px -> canvas px)
+      // Crop to the measured box (convert CSS px -> canvas px)
       const cw = container.clientWidth;
       const ratio = fullCanvas.width / cw;
 

@@ -11,18 +11,16 @@ import PromptExamples from "@/components/Landing/PromptExamples";
 export default function Page() {
   return (
     <>
-    
-    <div className=" container mx-auto  ">
-      <Navbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <UseCases />
-      <PromptExamples />
-      <FAQ />
-      <Footer />
-      
-    </div>
+      <div className=" container mx-auto  ">
+        <Navbar />
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <UseCases />
+        <PromptExamples />
+        <FAQ />
+        <Footer />
+      </div>
     </>
   );
 }

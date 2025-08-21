@@ -12,7 +12,6 @@ import {
   applyEdgeChanges,
   applyNodeChanges,
   Background,
-  Controls,
   ReactFlow,
   type Edge,
   type Node,
@@ -22,12 +21,15 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Markers } from "@/components/diagramcanvas/markers";
-import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
-import SuperCurvyEdge from "@/components/diagramcanvas/customedges";
-import { useDiagram } from "@/src/context/DiagramContext";
-import { useParams, usePathname } from "next/navigation";
-import { HandleMap, Props, RankDir } from "@/types/flowdiagram";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowUpDown,
   ArrowLeftRight,
@@ -35,28 +37,28 @@ import {
   ZoomOut,
   Maximize2,
   Download,
-  RotateCcw,
+  Workflow,
+  ChevronDown,
 } from "lucide-react";
 
-// 🔁 Layout utilities moved to dagreLayout.ts
-import {
-  layoutWithDagre,
-  getNodeSize,
-  DEFAULT_NODE_W,
-  DEFAULT_NODE_H,
-} from "./dagreLayout";
-
-// Your compact FloatingDock (supports onClick/actions)
+import { Markers } from "@/components/diagramcanvas/markers";
+import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
+import AdaptiveEdge from "@/components/diagramcanvas/AdaptiveEdge";
+import { useDiagram } from "@/src/context/DiagramContext";
+import { useParams, usePathname } from "next/navigation";
+import { HandleMap, Props, RankDir } from "@/types/flowdiagram";
+import { layoutWithDagre, getNodeSize } from "./dagreLayout";
 import { FloatingDock } from "@/components/ui/floating-dock";
 
-/* -------------------- Node/edge renderers -------------------- */
+/* Node/edge renderers */
 const nodeTypes = { databaseSchema: CustomERDNode };
-const edgeTypes = { superCurvyEdge: SuperCurvyEdge };
+const edgeTypes = { adaptiveEdge: AdaptiveEdge };
 
-/* =========================
-   Handle map / sanitization
-========================= */
+/* Edge type (single custom edge with variants) */
+type EdgeRenderType = "curvy" | "step" | "smoothstep" | "straight" | "bezier";
+const EDGE_TYPE_LS_KEY = "diagram.edgeType";
 
+/* -------------------- Handle map / sanitization -------------------- */
 function buildHandleMap(nodes: Node[]): HandleMap {
   const map: HandleMap = {};
   for (const n of nodes) {
@@ -97,25 +99,30 @@ function buildHandleMap(nodes: Node[]): HandleMap {
   return map;
 }
 
+/* Deterministic fallback id (avoids SSR/CSR mismatches) */
+function stableEdgeId(e: any) {
+  const s = String(e?.source ?? "");
+  const t = String(e?.target ?? "");
+  const sh = String(e?.sourceHandle ?? "");
+  const th = String(e?.targetHandle ?? "");
+  return `e:${s}|${sh}=>${t}|${th}`;
+}
+
 function coerceEdge(e: any): Edge {
-  const id = String(
-    e?.id ??
-      `${e?.source}-${e?.target}-${Math.random().toString(36).slice(2, 8)}`
-  );
+  const id = typeof e?.id === "string" && e.id ? e.id : stableEdgeId(e);
   return {
     id,
     source: String(e?.source ?? ""),
     target: String(e?.target ?? ""),
     sourceHandle: e?.sourceHandle ?? null,
     targetHandle: e?.targetHandle ?? null,
-    type: e?.type ?? "superCurvyEdge",
+    type: "adaptiveEdge",
     markerStart: e?.markerStart ?? "one-start",
     markerEnd: e?.markerEnd ?? "one-end",
     data: e?.data ?? {},
   } as Edge;
 }
 
-/** Enforce that edges connect to existing field handles. */
 function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
   const map = buildHandleMap(nodes);
   const fixed: Edge[] = [];
@@ -125,7 +132,6 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
     const src = map[e.source];
     const tgt = map[e.target];
     if (!src || !tgt) continue;
-
     if (src.all.size === 0 || tgt.all.size === 0) continue;
 
     const srcValid = !!(e.sourceHandle && src.all.has(e.sourceHandle));
@@ -133,14 +139,12 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
 
     const sourceHandle = srcValid ? e.sourceHandle! : src.defaultRight!;
     const targetHandle = tgtValid ? e.targetHandle! : tgt.defaultLeft!;
-
     if (!sourceHandle || !targetHandle) continue;
 
     fixed.push({
       ...e,
       sourceHandle,
       targetHandle,
-      type: e.type ?? "superCurvyEdge",
       markerStart: e.markerStart ?? "one-start",
       markerEnd: e.markerEnd ?? "one-end",
       data: e.data ?? {},
@@ -149,13 +153,10 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
   return fixed;
 }
 
-/* =========================
-   Small helpers
-========================= */
-
+/* -------------------- Small helpers -------------------- */
 function getNodeCenter(node: any): [number, number] {
-  const width = node.width ?? DEFAULT_NODE_W;
-  const height = node.height ?? DEFAULT_NODE_H;
+  const width = (node.width as number) ?? 240;
+  const height = (node.height as number) ?? 120;
   return [node.position.x + width / 2, node.position.y + height / 2];
 }
 function flipMarkerName(name: string) {
@@ -171,10 +172,7 @@ function flipHandleId(handleId?: string) {
   return handleId;
 }
 
-/* =========================
-   Component
-========================= */
-
+/* -------------------- Component -------------------- */
 const DiagramFlow: React.FC<Props> = ({
   nodes,
   edges,
@@ -184,7 +182,7 @@ const DiagramFlow: React.FC<Props> = ({
   const { diagramRef, setReactFlowInstance, exportPNG, isExporting } =
     useDiagram();
 
-  // Resolve diagramId: prefer prop -> route param -> pathname match
+  // Resolve diagramId
   const params = useParams() as any;
   const pathname = usePathname() || "";
   const idFromParam = params?.id as string | undefined;
@@ -196,9 +194,7 @@ const DiagramFlow: React.FC<Props> = ({
 
   useEffect(() => {
     if (!resolvedDiagramId) {
-      console.warn(
-        "[DiagramFlow] diagramId is missing; CustomERDNode API calls will fail."
-      );
+      console.warn("[DiagramFlow] diagramId is missing; node APIs may fail.");
     }
   }, [resolvedDiagramId]);
 
@@ -218,7 +214,46 @@ const DiagramFlow: React.FC<Props> = ({
   const [edgesState, setEdgesState] = useState<Edge[]>([]);
   const [layoutDir, setLayoutDir] = useState<RankDir>(layout);
 
-  // Recompute layout whenever inputs or layoutDir change
+  // Hydration-safe edge variant
+  const [edgeRenderType, setEdgeRenderType] = useState<EdgeRenderType>("curvy");
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+    try {
+      const saved = localStorage.getItem(
+        EDGE_TYPE_LS_KEY
+      ) as EdgeRenderType | null;
+      const allowed = [
+        "curvy",
+        "step",
+        "smoothstep",
+        "straight",
+        "bezier",
+      ] as const;
+      if (saved && (allowed as readonly string[]).includes(saved)) {
+        setEdgeRenderType(saved);
+      }
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(EDGE_TYPE_LS_KEY, edgeRenderType);
+    } catch {}
+  }, [edgeRenderType, hydrated]);
+
+  const edgeTypeLabel = useMemo(() => {
+    const labels: Record<EdgeRenderType, string> = {
+      curvy: "Curvy",
+      step: "Step",
+      smoothstep: "Smooth",
+      straight: "Straight",
+      bezier: "Bezier",
+    };
+    return labels[edgeRenderType];
+  }, [edgeRenderType]);
+
+  // Layout + sanitize on inputs change
   useEffect(() => {
     const sanitized = sanitizeEdges(edges ?? [], nodes ?? []);
     const sized = (nodes ?? []).map((n) => {
@@ -232,79 +267,119 @@ const DiagramFlow: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, layoutDir]);
 
-  // Hover state
+  /* ---------- PERFORMANCE: index edges by node to avoid scanning all edges ---------- */
+  const nodeEdgeIndex = useMemo(() => {
+    const m = new Map<string, Edge[]>();
+    for (const e of edgesState) {
+      if (!m.has(e.source)) m.set(e.source, []);
+      if (!m.has(e.target)) m.set(e.target, []);
+      m.get(e.source)!.push(e);
+      m.get(e.target)!.push(e);
+    }
+    return m;
+  }, [edgesState]);
+
+  // Hover (optional)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  const onNodesChange: OnNodesChange = useCallback((changes) => {
-    setNodesState((nds) => {
-      const updatedNodes = applyNodeChanges(changes, nds);
+  /* ---------- PERFORMANCE: rAF throttle for flip work during drags ---------- */
+  const pendingChangesRef = useRef<ReturnType<typeof applyNodeChanges> | null>(
+    null
+  );
+  const flipRAF = useRef<number | null>(null);
 
-      setEdgesState((currentEdges) => {
-        let updatedEdges = [...currentEdges];
+  const processFlipWork = useCallback(
+    (updatedNodes: Node[]) => {
+      let anyFlip = false;
+      const idToNode = new Map(updatedNodes.map((n) => [n.id, n]));
+      const newEdges = edgesState.map((edge) => edge); // shallow copy reference
+      const byId = new Map(newEdges.map((e) => [e.id, e]));
 
-        changes.forEach((change) => {
-          if (change.type !== "position") return;
+      // For each node that moved, only inspect its connected edges
+      for (const n of updatedNodes) {
+        const connected = nodeEdgeIndex.get(n.id);
+        if (!connected) continue;
 
-          const changedNode = updatedNodes.find((n) => n.id === change.id);
-          if (!changedNode) return;
+        for (const edge of connected) {
+          const sourceNode = idToNode.get(edge.source);
+          const targetNode = idToNode.get(edge.target);
+          if (!sourceNode || !targetNode) continue;
 
-          currentEdges.forEach((edge) => {
-            if (edge.source !== change.id && edge.target !== change.id) return;
+          const [sx, sy] = getNodeCenter(sourceNode);
+          const [tx, ty] = getNodeCenter(targetNode);
 
-            const sourceNode = updatedNodes.find((n) => n.id === edge.source);
-            const targetNode = updatedNodes.find((n) => n.id === edge.target);
-            if (!sourceNode || !targetNode) return;
+          const shouldFlip =
+            (layoutDir === "TB" && sy > ty) || (layoutDir !== "TB" && sx > tx);
 
-            const [sx] = getNodeCenter(sourceNode);
-            const [tx] = getNodeCenter(targetNode);
-            const shouldFlip = sx > tx;
+          if (shouldFlip) {
+            const markerStart =
+              typeof edge.markerEnd === "string"
+                ? flipMarkerName(edge.markerEnd)
+                : edge.markerEnd;
+            const markerEnd =
+              typeof edge.markerStart === "string"
+                ? flipMarkerName(edge.markerStart)
+                : edge.markerStart;
 
-            if (shouldFlip) {
-              const markerStart =
-                typeof edge.markerEnd === "string"
-                  ? flipMarkerName(edge.markerEnd)
-                  : edge.markerEnd;
-              const markerEnd =
-                typeof edge.markerStart === "string"
-                  ? flipMarkerName(edge.markerStart)
-                  : edge.markerStart;
+            const flipped: Edge = {
+              ...edge,
+              source: edge.target,
+              target: edge.source,
+              sourceHandle:
+                flipHandleId(edge.targetHandle ?? undefined) ?? undefined,
+              targetHandle:
+                flipHandleId(edge.sourceHandle ?? undefined) ?? undefined,
+              markerStart: markerStart as any,
+              markerEnd: markerEnd as any,
+            };
 
-              const flippedEdge: Edge = {
-                ...edge,
-                source: edge.target,
-                target: edge.source,
-                sourceHandle:
-                  flipHandleId(edge.targetHandle ?? undefined) ?? undefined,
-                targetHandle:
-                  flipHandleId(edge.sourceHandle ?? undefined) ?? undefined,
-                markerStart: markerStart as any,
-                markerEnd: markerEnd as any,
-              };
+            byId.set(edge.id, flipped);
+            anyFlip = true;
+          }
+        }
+      }
 
-              updatedEdges = updatedEdges.map((e) =>
-                e.id === edge.id ? flippedEdge : e
-              );
-            }
-          });
+      if (anyFlip) {
+        // Rebuild array only if something actually changed
+        setEdgesState(Array.from(byId.values()));
+      }
+    },
+    [edgesState, layoutDir, nodeEdgeIndex]
+  );
+
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes) => {
+      // 1) Apply node changes immediately
+      setNodesState((nds) => applyNodeChanges(changes, nds));
+
+      // 2) If there were position changes, schedule one flip pass for this frame
+      const hasPositionChange = changes.some((c) => c.type === "position");
+      if (!hasPositionChange) return;
+
+      // Run at most once per animation frame
+      if (flipRAF.current) cancelAnimationFrame(flipRAF.current);
+      flipRAF.current = requestAnimationFrame(() => {
+        // Read the latest nodes and do minimal flip work
+        setNodesState((latest) => {
+          processFlipWork(latest);
+          return latest;
         });
-
-        return updatedEdges;
       });
-
-      return updatedNodes;
-    });
-  }, []);
+    },
+    [processFlipWork]
+  );
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdgesState((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
-  const onConnect: OnConnect = useCallback((params) => {
-    setEdgesState((eds) => addEdge(params, eds));
-  }, []);
+  const onConnect: OnConnect = useCallback(
+    (params) => setEdgesState((eds) => addEdge(params, eds)),
+    []
+  );
 
-  // Derived hover decorations
+  // Connected highlights
   const connectedEdges = useMemo(() => {
     if (!hoveredNodeId) return [];
     return edgesState.filter(
@@ -320,7 +395,6 @@ const DiagramFlow: React.FC<Props> = ({
     return ids;
   }, [connectedEdges, hoveredNodeId]);
 
-  // Inject diagramId + hover flags into each node
   const nodesWithHover = useMemo(
     () =>
       nodesState.map((n) => ({
@@ -342,21 +416,23 @@ const DiagramFlow: React.FC<Props> = ({
     [connectedEdges]
   );
 
-  const edgesWithHover = useMemo(
+  const edgesForRender = useMemo(
     () =>
       edgesState.map((e) => ({
         ...e,
+        type: "adaptiveEdge" as const,
         animated: connectedEdgeIds.has(e.id),
         data: {
           ...(e.data || {}),
+          variant: edgeRenderType,
           isConnected: connectedEdgeIds.has(e.id),
           hoveredNodeId,
         },
       })),
-    [edgesState, connectedEdgeIds, hoveredNodeId]
+    [edgesState, connectedEdgeIds, hoveredNodeId, edgeRenderType]
   );
 
-  /* ------------------------- Layout + controller actions ------------------------- */
+  /* Layout + viewport controls */
   const applyLayout = useCallback(
     (dir: RankDir) => {
       setLayoutDir(dir);
@@ -365,22 +441,22 @@ const DiagramFlow: React.FC<Props> = ({
     },
     [edgesState]
   );
-
   const fitViewNow = useCallback(() => {
     rfRef.current?.fitView?.({ padding: 0.15 });
   }, []);
-
   const zoomBy = useCallback((delta: number) => {
     const cur = rfRef.current?.getViewport?.().zoom ?? 1;
     const next = Math.max(0.1, Math.min(4, cur + delta));
     rfRef.current?.zoomTo?.(next);
   }, []);
 
-  /* ------------------------- UI ------------------------- */
   return (
     <div className="relative w-full h-full bg-gray-100">
-      {/* Floating controller dock (centered bottom on desktop, bottom-right on mobile) */}
-      <div data-export-exclude="true">
+      {/* Bottom controls: Dock + Edge-type dropdown */}
+      <div
+        data-export-exclude="true"
+        className="absolute bottom-2 inset-x-0 mx-auto w-fit z-30 flex items-center gap-2"
+      >
         <FloatingDock
           items={[
             {
@@ -417,14 +493,58 @@ const DiagramFlow: React.FC<Props> = ({
               active: layoutDir === "TB",
             },
           ]}
-          desktopClassName="absolute bottom-2 inset-x-0 mx-auto w-fit z-30"
-          mobileClassName="fixed bottom-4 right-4 z-30"
+          desktopClassName="w-fit"
+          mobileClassName="w-fit"
         />
+
+        {/* Edge type dropdown (hydration-safe label) */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl border-slate-300 bg-white/90 backdrop-blur hover:bg-white"
+              title="Edge type"
+            >
+              <Workflow className="w-4 h-4 mr-2" />
+              <span className="text-xs">
+                {
+                  {
+                    curvy: "Curvy",
+                    step: "Step",
+                    smoothstep: "Smooth",
+                    straight: "Straight",
+                    bezier: "Bezier",
+                  }[edgeRenderType]
+                }
+              </span>
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuRadioGroup
+              value={edgeRenderType}
+              onValueChange={(v) => setEdgeRenderType(v as EdgeRenderType)}
+            >
+              <DropdownMenuRadioItem value="step">Step</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="smoothstep">
+                Smooth Step
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="straight">
+                Straight
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="bezier">
+                Bezier
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
+      {/* Canvas */}
       <ReactFlow
         nodes={nodesWithHover}
-        edges={edgesWithHover}
+        edges={edgesForRender}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
@@ -433,9 +553,13 @@ const DiagramFlow: React.FC<Props> = ({
         onInit={onInit}
         fitView
         ref={diagramRef}
+        onlyRenderVisibleElements
+        proOptions={{ hideAttribution: true }}
+        className="!bg-background"
       >
-        <Background />
-        <Markers color={hoveredNodeId ? "#0042ff" : "#666"} />
+        <Background color="var(--border)" />
+
+        <Markers color={hoveredNodeId ? "#0042ff" : " #fff"} />
       </ReactFlow>
     </div>
   );

@@ -1,10 +1,18 @@
-export function Markers({ color }: { color: string }) {
-  const strokeWidth = color === "#0042ff" ? 1.5 : 1; // thicker when hover color
+// components/diagramcanvas/markers.tsx
+export function Markers({
+  color,
+  background = "var(--marker-bg, var(--background, #fff))", // ← light=white, dark=dark
+}: {
+  color: string;
+  background?: string;
+}) {
+  // keep your thickness logic as-is
+  const strokeWidth = color === "#0042ff" ? 1.5 : 1;
 
   return (
     <svg width="0" height="0" style={{ pointerEvents: "none" }}>
       <defs>
-        {/* One marker ( | ) */}
+        {/* | marker */}
         <marker
           id="one-start"
           refX="2"
@@ -39,7 +47,7 @@ export function Markers({ color }: { color: string }) {
           />
         </marker>
 
-        {/* Many Marker */}
+        {/* crow's foot */}
         <marker
           id="many-end"
           viewBox="0 0 10 10"
@@ -78,7 +86,7 @@ export function Markers({ color }: { color: string }) {
           />
         </marker>
 
-        {/* Zero-to-One */}
+        {/* 0..1 */}
         <marker
           id="zero-to-one-start"
           viewBox="0 0 20 10"
@@ -99,7 +107,7 @@ export function Markers({ color }: { color: string }) {
             cx="-2"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -126,14 +134,14 @@ export function Markers({ color }: { color: string }) {
             cx="12"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
         </marker>
 
-        {/* Zero-to-Many */}
+        {/* 0..* */}
         <marker
           id="zero-to-many-end"
           viewBox="0 0 20 10"
@@ -148,7 +156,7 @@ export function Markers({ color }: { color: string }) {
             cx="-5"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -176,21 +184,21 @@ export function Markers({ color }: { color: string }) {
             cx="15"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
           <path
             d="M 0 0 L 10 5 L 0 10"
-            fill="white"
+            fill="none"
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
           />
         </marker>
 
-        {/* Only Zero */}
+        {/* only 0 */}
         <marker
           id="zero-end"
           viewBox="0 0 10 10"
@@ -205,7 +213,7 @@ export function Markers({ color }: { color: string }) {
             cx="5"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -226,7 +234,7 @@ export function Markers({ color }: { color: string }) {
             cx="5"
             cy="5"
             r="4"
-            fill="white"
+            fill={background}
             stroke={color}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"

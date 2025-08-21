@@ -8,6 +8,8 @@ import { useDiagramApi } from "@/src/context/DiagramContext";
 import type { Diagram, UpdateDiagramBody } from "@/lib/api";
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 import toast from "react-hot-toast";
+import FancyProgressLoader from "@/components/common/fancy-progress-loader";
+import ThemeToggle from "@/components/common/ThemeToggle"; // ⬅️ add
 
 const DiagramPageClient: React.FC = () => {
   const params = useParams<{ id: string }>();
@@ -18,19 +20,10 @@ const DiagramPageClient: React.FC = () => {
     fetching,
     updateDiagram: updateDiagramApi,
   } = useDiagramApi();
+
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ---- Helpers ----
-  const getToastMessage = (err: any): string => {
-    const data = err?.response?.data ?? err?.data ?? err;
-    if (data?.success === false && data?.error?.message)
-      return data.error.message;
-    if (data?.message) return data.message;
-    if (typeof data === "string") return data;
-    return err?.message || "Something went wrong";
-  };
+  const [generating, setGenerating] = useState<boolean>(false);
 
   // ---- Initial fetch ----
   useEffect(() => {
@@ -42,11 +35,13 @@ const DiagramPageClient: React.FC = () => {
         const doc = await getDiagram(diagramId);
         if (alive) setDiagram(doc);
       } catch (e: any) {
-        if (alive) {
-          const msg = getToastMessage(e);
-          setError(msg);
-          toast.error(msg);
-        }
+        const data = e?.response?.data ?? e?.data ?? e;
+        const msg =
+          (data?.success === false && data?.error?.message) ||
+          data?.message ||
+          e?.message ||
+          "Something went wrong";
+        toast.error(msg);
       } finally {
         if (alive) setLoading(false);
       }
@@ -56,7 +51,7 @@ const DiagramPageClient: React.FC = () => {
     };
   }, [diagramId, getDiagram]);
 
-  // ---- Update handler passed to TabsDemo ----
+  // ---- Update handler passed to TextTab ----
   const handleUpdate = async (
     newTitle?: string,
     newPrompt?: string,
@@ -65,65 +60,90 @@ const DiagramPageClient: React.FC = () => {
     if (!diagramId) return;
 
     const body: UpdateDiagramBody = {};
-    if (typeof newTitle === "string") {
+
+    if (typeof newTitle === "string" && newTitle !== diagram?.title) {
       body.title = newTitle;
     }
-    if (typeof newPrompt === "string") body.prompt = newPrompt;
-    if (typeof model === "string") body.model = model as any;
+    if (typeof newPrompt === "string" && newPrompt !== diagram?.prompt) {
+      body.prompt = newPrompt;
+    }
+    if (typeof model === "string" && model !== (diagram as any)?.model) {
+      body.model = model as any;
+    }
 
-    // No-op if nothing provided
     if (Object.keys(body).length === 0) return;
 
+    const needsGeneration = Boolean(body.prompt) || Boolean(body.model);
+
     try {
+      if (needsGeneration) setGenerating(true);
+
       const updated = await updateDiagramApi(diagramId, body);
-      setDiagram(updated); // keep UI in sync with server response (nodes/edges may change after prompt)
-      toast.success("Diagram updated successfully!");
+      setDiagram(updated);
+
+      toast.success(
+        needsGeneration ? "Diagram updated successfully!" : "Title updated"
+      );
     } catch (e: any) {
-      const msg = getToastMessage(e);
+      const data = e?.response?.data ?? e?.data ?? e;
+      const msg =
+        (data?.success === false && data?.error?.message) ||
+        data?.message ||
+        e?.message ||
+        "Update failed";
       toast.error(msg);
       throw e;
+    } finally {
+      if (needsGeneration) setGenerating(false);
     }
   };
 
-  // ---- Layout ----
+  const showingInitialLoader = (fetching || loading) && !diagram;
+
   return (
-    <div className="w-full ">
+    <div className="w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6">
-        {/* Left: Create/Update panel */}
+        {/* Left: Create panel */}
         <aside
           className="
             order-1 lg:order-1
             lg:col-span-4
             w-full
             lg:sticky lg:top-4 lg:self-start
-            lg:h-[calc(100vh-2rem)]  
+            lg:h-[calc(100vh-2rem)]
             overflow-auto
           "
         >
           <TextTab
             title={diagram?.title}
-            prompt={diagram?.prompt}
-            diagramId={diagramId}
-            isLoading={(fetching || loading) && !diagram}
+            diagramId={diagramId!}
+            isLoading={showingInitialLoader}
+            isBusy={generating}
             onUpdate={handleUpdate}
           />
         </aside>
 
-        {/* Right: Canvas */}
+        {/* Right: Canvas + (optional) loader overlay */}
         <section
           className="
             order-2
             lg:col-span-8
             w-full
             shadow-md
-            bg-white
-            
-            lg:h-[calc(100vh-2rem)]   /* full height on desktop minus top-4 */
+            bg-card text-card-foreground
+            border border-border
+            lg:h-[calc(100vh-2rem)]
+            relative
             flex
           "
         >
-          {(fetching || loading) && !diagram ? (
-            <div className="flex h-[55vh] sm:h-[60vh] md:h-[68vh] lg:h-full items-center justify-center text-slate-600 gap-2 grow">
+          {/* Theme toggle pinned top-right (above overlays) */}
+          <div className="absolute top-2 right-2 z-50">
+            <ThemeToggle />
+          </div>
+
+          {showingInitialLoader ? (
+            <div className="flex h-[55vh] sm:h-[60vh] md:h-[68vh] lg:h-full items-center justify-center text-muted-foreground gap-2 grow">
               <Spinner className="h-5 w-5" />
               Loading canvas…
             </div>
@@ -136,6 +156,13 @@ const DiagramPageClient: React.FC = () => {
                 nodes={diagram?.nodes ?? []}
                 edges={diagram?.edges ?? []}
               />
+            </div>
+          )}
+
+          {/* Fancy overlay while generating (prompt/model changes) */}
+          {generating && (
+            <div className="absolute inset-0 z-40">
+              <FancyProgressLoader loading={true} withBackdrop />
             </div>
           )}
         </section>

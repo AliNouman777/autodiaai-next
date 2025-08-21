@@ -1,5 +1,5 @@
 // app/diagram/erd/[id]/page.tsx
-import AuthWrapper from "@/components/Auth/AuthWrapper";
+// import AuthWrapper from "@/components/Auth/AuthWrapper";
 import DiagramPageClient from "../DiagramPageClient";
 
 export default async function Page({
@@ -9,9 +9,8 @@ export default async function Page({
 }) {
   const { id } = await params; // ✅ await the Promise
   return (
-
-    <AuthWrapper>
-      <DiagramPageClient />
-    </AuthWrapper>
-  )
+    // <AuthWrapper>
+    <DiagramPageClient />
+    // </AuthWrapper>
+  );
 }

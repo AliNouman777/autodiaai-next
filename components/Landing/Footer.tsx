@@ -16,17 +16,24 @@ export default function Footer() {
           {/* Company Info */}
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
-              {/* <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"> */}
-              <Image
-                src={Logo}
-                alt="Logo of company"
-                width={70}
-                height={10}
-                priority
-                className="w-auto h-auto"
-              />
-              {/* </div> */}
-              <span className="text-xl font-bold text-white -ml-8">AutoDia AI</span>
+              <span className="text-xl font-bold text-white -ml-8">
+                <div className="flex items-center space-x-2 ">
+                  <Image
+                    src={Logo}
+                    alt="Company logo"
+                    width={60}
+                    height={48}
+                    priority
+                    className="w-auto h-auto"
+                  />
+                  <div className="-ml-5 text-2xl font-bold flex items-center ">
+                    <span className="text-white">Auto</span>
+                    <span className="text-blue-500">Dia</span>
+                    &nbsp;
+                    <span className="text-white"> Ai</span>
+                  </div>
+                </div>
+              </span>
             </div>
             <p className="text-slate-400 leading-relaxed mb-6 max-w-md">
               The leading AI-powered Entity-Relationship Diagram generator.

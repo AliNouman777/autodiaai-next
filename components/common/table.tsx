@@ -12,13 +12,12 @@ import {
 } from "@/components/ui/table";
 import DeleteDialog from "./DeleteDialog";
 import { useDiagramApi } from "@/src/context/DiagramContext";
-import { Spinner } from "@/src/components/ui/shadcn-io/spinner"; // ⬅️ import your Spinner
+import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 
 const AnimatedTable = () => {
   const router = useRouter();
   const { diagrams, fetching, listDiagrams } = useDiagramApi();
 
-  // show spinner while redirecting
   const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
@@ -35,17 +34,17 @@ const AnimatedTable = () => {
   };
 
   const handleRowClick = (d: { _id: string; type: string }) => {
-    if (navigating) return; // prevent double clicks
+    if (navigating) return;
     setNavigating(true);
     router.push(`/diagram/${d.type}/${d._id}`);
   };
 
   return (
-    <div className="relative w-full rounded-md shadow-xl bg-white border border-slate-100 transition-all duration-300">
+    <div className="relative w-full rounded-md shadow-xl bg-card border border-border transition-colors duration-300">
       {/* Page overlay spinner while navigating */}
       {navigating && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-white/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm"
           aria-busy="true"
           aria-live="polite"
         >
@@ -55,20 +54,25 @@ const AnimatedTable = () => {
 
       <Table className="mx-auto">
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-blue-50 to-blue-100">
-            <TableHead className="text-slate-700 font-semibold">
+          <TableRow
+            className="
+            bg-gradient-to-r from-blue-50 to-blue-100
+            dark:from-slate-800 dark:to-slate-900
+          "
+          >
+            <TableHead className="text-foreground font-semibold">
               Title
             </TableHead>
-            <TableHead className="text-slate-700 font-semibold">
+            <TableHead className="text-foreground font-semibold">
               Last Updated
             </TableHead>
-            <TableHead className="text-slate-700 font-semibold">
+            <TableHead className="text-foreground font-semibold">
               Created Time
             </TableHead>
-            <TableHead className="text-slate-700 font-semibold">
+            <TableHead className="text-foreground font-semibold">
               Diagram Type
             </TableHead>
-            <TableHead className="text-right text-slate-700 font-semibold"></TableHead>
+            <TableHead className="text-right text-foreground font-semibold" />
           </TableRow>
         </TableHeader>
 
@@ -79,19 +83,19 @@ const AnimatedTable = () => {
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={`sk-${i}`} className="animate-pulse">
                   <TableCell className="font-semibold">
-                    <div className="h-4 w-32 bg-slate-200 rounded" />
+                    <div className="h-4 w-32 bg-muted rounded" />
                   </TableCell>
                   <TableCell>
-                    <div className="h-4 w-40 bg-slate-200 rounded" />
+                    <div className="h-4 w-40 bg-muted rounded" />
                   </TableCell>
                   <TableCell>
-                    <div className="h-4 w-40 bg-slate-200 rounded" />
+                    <div className="h-4 w-40 bg-muted rounded" />
                   </TableCell>
                   <TableCell>
-                    <div className="h-4 w-20 bg-slate-200 rounded" />
+                    <div className="h-4 w-20 bg-muted rounded" />
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="h-8 w-24 bg-slate-200 rounded ml-auto" />
+                    <div className="h-8 w-24 bg-muted rounded ml-auto" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -103,7 +107,7 @@ const AnimatedTable = () => {
             <TableRow>
               <TableCell
                 colSpan={5}
-                className="text-center py-6 text-slate-500"
+                className="text-center py-6 text-muted-foreground"
               >
                 No diagrams yet.
               </TableCell>
@@ -114,18 +118,27 @@ const AnimatedTable = () => {
           {diagrams?.map((d) => (
             <TableRow
               key={d._id}
-              className="transition-all duration-100 hover:bg-blue-50/60 cursor-pointer"
+              className="
+                transition-colors duration-150 cursor-pointer
+                hover:bg-muted/60
+              "
               onClick={() => handleRowClick(d)}
             >
-              <TableCell className="font-semibold">
+              <TableCell className="font-semibold text-foreground">
                 {d.title || "Untitled"}
               </TableCell>
-              <TableCell>{fmt(d.updatedAt)}</TableCell>
-              <TableCell>{fmt(d.createdAt)}</TableCell>
-              <TableCell className="uppercase">{d.type}</TableCell>
+              <TableCell className="text-foreground/90">
+                {fmt(d.updatedAt)}
+              </TableCell>
+              <TableCell className="text-foreground/90">
+                {fmt(d.createdAt)}
+              </TableCell>
+              <TableCell className="uppercase text-foreground/90">
+                {d.type}
+              </TableCell>
               <TableCell
                 className="text-right"
-                onClick={(e) => e.stopPropagation()} // avoid row navigation when clicking delete
+                onClick={(e) => e.stopPropagation()}
               >
                 <DeleteDialog diagramId={d._id} />
               </TableCell>

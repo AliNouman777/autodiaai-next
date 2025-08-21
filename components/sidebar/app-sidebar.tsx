@@ -1,5 +1,12 @@
 "use client";
-import { UserStar, Home, MessageSquareQuote, LogOut } from "lucide-react";
+
+import {
+  UserStar,
+  Home,
+  MessageSquareQuote,
+  LogOut,
+  LogIn,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,48 +20,27 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/public/logo.png";
-import { useAuth } from "@/src/context/AuthContext"; // ✅ Import your AuthContext
+import { useAuth } from "@/src/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 export function AppSidebar() {
-  const { logout, loading } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     if (loading) return;
     try {
-      await logout(); // Calls API + clears auth state
-      router.replace("/login"); // Redirect to login
+      await logout();
+      router.replace("/login");
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error("Logout failed. Try again.");
     }
   };
 
-  const menuItems = [
-    {
-      title: "Home",
-      url: "/diagram",
-      icon: Home,
-      onClick: undefined,
-    },
-    {
-      title: "Feedback",
-      url: "/feedback",
-      icon: MessageSquareQuote,
-      onClick: undefined,
-    },
-    {
-      title: "Logout",
-      url: "#",
-      icon: LogOut,
-      onClick: handleLogout, // ✅ Trigger logout
-    },
-  ];
-
   return (
-    <Sidebar>
+    <Sidebar className="bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
@@ -69,10 +55,9 @@ export function AppSidebar() {
                   className="w-auto h-auto"
                 />
                 <div className="-ml-5 text-xl font-semibold flex items-center">
-                  <span className="text-gray-700">Auto</span>
-                  <span className="text-blue-500">Dia</span>
-                  &nbsp;
-                  <span className="text-blue-500"> Ai</span>
+                  <span className="text-foreground">Auto</span>
+                  <span className="text-primary">Dia</span>&nbsp;
+                  <span className="text-foreground">Ai</span>
                 </div>
               </Link>
             </div>
@@ -80,27 +65,53 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu className="mt-2">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title} className="mt-2">
+              <SidebarMenuItem className="mt-2">
+                <SidebarMenuButton
+                  asChild
+                  className="gap-2 hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Link href="/diagram">
+                    <Home className="h-4 w-4" />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="mt-2">
+                <SidebarMenuButton
+                  asChild
+                  className="gap-2 hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Link href="/feedback">
+                    <MessageSquareQuote className="h-4 w-4" />
+                    <span>Feedback</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {user ? (
+                <SidebarMenuItem className="mt-2">
                   <SidebarMenuButton
-                    asChild={!item.onClick}
-                    onClick={item.onClick}
-                    className="cursor-pointer"
+                    onClick={handleLogout}
+                    className="gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground"
                   >
-                    {item.onClick ? (
-                      <div className="flex items-center space-x-2">
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </div>
-                    ) : (
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    )}
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              ) : (
+                <SidebarMenuItem className="mt-2">
+                  <SidebarMenuButton
+                    asChild
+                    className="gap-2 hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <Link href="/login">
+                      <LogIn className="h-4 w-4" />
+                      <span>Login</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

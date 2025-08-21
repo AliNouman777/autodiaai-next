@@ -2,7 +2,6 @@
 import {
   Navbar,
   NavBody,
-  NavItems,
   MobileNav,
   MobileNavHeader,
   MobileNavToggle,
@@ -14,13 +13,9 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useAuth } from "@/src/context/AuthContext";
 import ButtonSkeleton from "../skeleton/landing/ButtonSkeleton";
+import ThemeToggle from "@/components/common/ThemeToggle";
 
 export default function AppNavbar() {
-  const navItems = [
-    { name: "Docs", link: "#docs" },
-    { name: "Pricing", link: "#pricing" },
-    { name: "GitHub", link: "https://github.com" },
-  ];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, initializing } = useAuth();
 
@@ -38,7 +33,7 @@ export default function AppNavbar() {
         <div className="flex items-center gap-2">
           <Button
             href="/diagram"
-            className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+            className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-[100]"
           >
             Generate Diagram
           </Button>
@@ -49,13 +44,13 @@ export default function AppNavbar() {
       <div className="flex items-center gap-2">
         <Button
           href="/signup"
-          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-[100]"
         >
           SignUp
         </Button>
         <Button
           href="/login"
-          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-100"
+          className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition font-medium w-full cursor-pointer z-[100]"
         >
           Login
         </Button>
@@ -108,7 +103,7 @@ export default function AppNavbar() {
     <Navbar>
       {/* Desktop navbar */}
       <NavBody>
-        <div className="flex items-center space-x-2 ">
+        <div className="flex items-center space-x-2">
           <Image
             src={Logo}
             alt="Company logo"
@@ -117,17 +112,18 @@ export default function AppNavbar() {
             priority
             className="w-auto h-auto"
           />
-          <div className="-ml-5 text-2xl font-bold flex items-center ">
-            <span className="text-gray-700">Auto</span>
-            <span className="text-blue-500">Dia</span>
-            &nbsp;
-            <span className="text-gray-700"> Ai</span>
+          <div className="-ml-5 text-2xl font-bold flex items-center">
+            <span className="text-gray-700 dark:text-gray-100">Auto</span>
+            <span className="text-blue-500">Dia</span>&nbsp;
+            <span className="text-gray-700 dark:text-gray-100"> Ai</span>
           </div>
         </div>
 
-        <NavItems items={navItems} />
-
-        <DesktopCTA />
+        {/* Right side: theme toggle + CTA */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <DesktopCTA />
+        </div>
       </NavBody>
 
       {/* Mobile navbar */}
@@ -142,31 +138,30 @@ export default function AppNavbar() {
               priority
               className="w-auto h-auto"
             />
-            <span className="text-xl font-bold text-gray-700">Auto</span>
+            <span className="text-xl font-bold text-gray-700 dark:text-gray-100">
+              Auto
+            </span>
             <span className="text-xl font-bold text-blue-500">Dia</span>
-            <span className="text-xl font-bold text-gray-700"> Ai</span>
+            <span className="text-xl font-bold text-gray-700 dark:text-gray-100">
+              {" "}
+              Ai
+            </span>
           </div>
-          <MobileNavToggle
-            isOpen={isMobileMenuOpen}
-            onClick={() => setIsMobileMenuOpen((v) => !v)}
-          />
+
+          {/* Right side: theme toggle + menu toggle */}
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <MobileNavToggle
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
+            />
+          </div>
         </MobileNavHeader>
 
         <MobileNavMenu
           isOpen={isMobileMenuOpen}
           onClose={() => setIsMobileMenuOpen(false)}
         >
-          {navItems.map((item, idx) => (
-            <a
-              key={`mobile-link-${idx}`}
-              href={item.link}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full px-4 py-2 text-lg text-neutral-700 hover:bg-blue-100 rounded"
-            >
-              {item.name}
-            </a>
-          ))}
-
           <MobileCTA />
         </MobileNavMenu>
       </MobileNav>

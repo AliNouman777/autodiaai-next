@@ -53,15 +53,15 @@ export default function CreateDiagramSheet({
       toast.error("Please enter a diagram name.");
       return;
     }
+
     setSaving(true);
     try {
       const doc = await createDiagram(name.trim(), type);
-      toast.success("Diagram created!");
-      // keep UI in a transition while navigating
       startTransition(() => {
         router.push(`/diagram/${doc.type}/${doc._id}`);
       });
-      // setOpen(false);
+      toast.success("Diagram created!");
+      setOpen(false);
     } catch (err: any) {
       toast.error(err?.message || "Something went wrong.");
     } finally {
@@ -77,7 +77,8 @@ export default function CreateDiagramSheet({
         </Button>
       </SheetTrigger>
 
-      <SheetContent>
+      {/* Ensure the sheet surface is themed */}
+      <SheetContent className="bg-card text-card-foreground">
         <form
           onSubmit={onSubmit}
           className="relative flex h-full flex-col p-3"
@@ -85,7 +86,8 @@ export default function CreateDiagramSheet({
         >
           <SheetHeader>
             <SheetTitle>Create a new diagram</SheetTitle>
-            <SheetDescription>
+            {/* Tokenized muted color for description */}
+            <SheetDescription className="text-muted-foreground">
               Give your diagram a name and choose a type.
             </SheetDescription>
           </SheetHeader>
@@ -110,10 +112,9 @@ export default function CreateDiagramSheet({
                 onValueChange={(v) => setType(v as DiagramType)}
                 disabled={busy}
               >
-                <SelectTrigger id="diagram-type" className="w-full">
-                  <SelectValue placeholder="Select a type" />
-                </SelectTrigger>
-                <SelectContent>
+                <SelectTrigger id="diagram-type" className="w-full" />
+                {/* Make the dropdown popover themed as well */}
+                <SelectContent className="bg-popover text-popover-foreground border border-border">
                   <SelectItem value="erd">ERD</SelectItem>
                   {/* add more types later */}
                 </SelectContent>
@@ -139,10 +140,10 @@ export default function CreateDiagramSheet({
             </SheetClose>
           </SheetFooter>
 
-          {/* Subtle overlay during create + navigation */}
+          {/* Subtle overlay during create + navigation (tokenized) */}
           {busy && (
-            <div className="pointer-events-none absolute inset-0 rounded-md bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-              <div className="flex items-center gap-2 text-sm text-slate-600">
+            <div className="pointer-events-none absolute inset-0 rounded-md bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Spinner className="h-5 w-5" />
                 <span>Working…</span>
               </div>

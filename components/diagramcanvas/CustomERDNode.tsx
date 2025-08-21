@@ -70,8 +70,6 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
     schema: [...data.schema],
   }));
 
-  // NOTE: You don't actually need mountedRef anymore for saving reset,
-  // but we keep it for completeness on per-row updates/deletes.
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => void (mountedRef.current = false);
@@ -96,7 +94,6 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
       return;
     }
 
-    // 1) Compute diffs BEFORE setting saving=true
     const newLabel = editData.label.trim();
     const oldLabel = data.label.trim();
     const labelChanged = newLabel !== oldLabel;
@@ -104,7 +101,6 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
     const toUpsert = editData.schema.filter((c) => {
       const o = originalById.get(c.id);
       if (!o) {
-        // new row must be minimally valid
         return !!c.title.trim() && !!c.type.trim();
       }
       return isFieldChanged(c, o);
@@ -115,17 +111,14 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
       return;
     }
 
-    // 2) Now mark saving and run API calls
     setSaving(true);
     const toastId = toast.loading("Saving changes…");
     try {
-      // label first (tiny request)
       if (labelChanged) {
         await updateNodeLabel(diagramId, nodeId, newLabel);
       }
 
       if (toUpsert.length > 0) {
-        // do field updates in parallel; fail fast if any rejected
         const results = await Promise.allSettled(
           toUpsert.map((f) => {
             const safeKey: KeyKind = (["", "PK", "FK"] as const).includes(
@@ -146,7 +139,6 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
           (r) => r.status === "rejected"
         ) as PromiseRejectedResult[];
         if (failures.length) {
-          // bubble up first meaningful error
           const first = failures[0].reason;
           throw new Error(
             getErrorMessage(first, "One or more fields failed to save.")
@@ -163,8 +155,6 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
       toast.error(msg, { id: toastId });
       resetEditData();
     } finally {
-      // ALWAYS clear saving, even if unmounted we can set it safely (React ignores setState on unmounted in strict mode with a warning,
-      // but if you want to be extra safe, keep the check—core issue was not this)
       setSaving(false);
     }
   }, [
@@ -264,16 +254,16 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
 
   const glowClasses = [
     data.isHovered &&
-      "ring-2 ring-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.5)]",
+      "ring-2 ring-primary shadow-[0_0_40px_rgba(59,130,246,0.35)]",
     data.isConnected &&
-      "ring-2 ring-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.5)]",
+      "ring-2 ring-violet-500 dark:ring-violet-400 shadow-[0_0_50px_rgba(139,92,246,0.35)]",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div
-      className={`min-w-[200px] rounded-lg bg-white border border-gray-300 shadow transition-shadow font-sans text-xs duration-150 relative group ${glowClasses}`}
+      className={`min-w-[200px] rounded-lg bg-card border border-border shadow  transition-shadow font-sans text-xs duration-150 relative group ${glowClasses}`}
       onMouseEnter={data.onNodeHover}
       onMouseLeave={data.onNodeUnhover}
     >
@@ -283,7 +273,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
           <button
             type="button"
             onClick={() => setEdit(true)}
-            className="opacity-70 hover:opacity-100 text-white cursor-pointer bg-blue-600 rounded p-1 transition"
+            className="opacity-80 hover:opacity-100 text-primary-foreground bg-primary rounded p-1 transition-colors cursor-pointer"
             title="Edit Table"
           >
             <Pencil size={16} />
@@ -294,10 +284,10 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={`rounded p-1 transition ${
+              className={`rounded p-1 transition-colors ${
                 saving
-                  ? "text-green-600 bg-white/60 cursor-not-allowed"
-                  : "text-green-600 bg-white hover:bg-green-100"
+                  ? "text-green-600 bg-card/60 cursor-not-allowed"
+                  : "text-green-600 bg-card hover:bg-green-100 dark:hover:bg-green-950/40"
               }`}
               title="Save"
             >
@@ -311,7 +301,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              className="text-red-600 bg-white rounded hover:bg-red-100 p-1 transition disabled:opacity-50"
+              className="text-destructive bg-card rounded hover:bg-destructive/10 p-1 transition-colors disabled:opacity-50"
               title="Cancel"
             >
               <X size={16} />
@@ -322,7 +312,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
 
       {/* Table Label */}
       {!edit ? (
-        <div className="bg-blue-600 text-white px-2.5 py-1.5 font-bold rounded-t-lg text-center text-sm">
+        <div className="bg-primary text-primary-foreground px-2.5 py-1.5 font-bold rounded-t-lg text-center text-sm transition-colors">
           {editData.label}
         </div>
       ) : (
@@ -331,7 +321,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
           onChange={(e) =>
             setEditData((prev) => ({ ...prev, label: e.target.value }))
           }
-          className="bg-blue-50 border-b-2 border-blue-500 px-2.5 py-1.5 font-bold rounded-t-lg text-center text-sm w-full focus:outline-none"
+          className="bg-muted border-b-2 border-primary px-2.5 py-1.5 font-bold rounded-t-lg text-center text-sm w-full focus:outline-none text-foreground transition-colors"
         />
       )}
 
@@ -339,23 +329,23 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
       <div>
         {editData.schema.map((col, idx) => {
           const busy = !!rowBusy[col.id];
+          const bgClass =
+            col.key === "PK"
+              ? "bg-amber-100 dark:bg-amber-900/30"
+              : col.key === "FK"
+              ? "bg-blue-100 dark:bg-blue-900/30"
+              : "bg-card";
           return (
             <div
               key={col.id}
-              className={`flex items-center px-2 py-1 border-b last:border-b-0 ${
-                col.key === "PK"
-                  ? "bg-yellow-100"
-                  : col.key === "FK"
-                  ? "bg-blue-200"
-                  : "bg-white"
-              } relative min-h-[32px] hover:bg-gray-100 `}
+              className={`flex items-center px-2 py-1 border-b border-border last:border-b-0 ${bgClass} relative min-h-[32px] hover:bg-muted/70 transition-colors`}
             >
               {/* Left Handle */}
               <Handle
                 type="target"
                 position={Position.Left}
                 id={`${col.id}-left`}
-                className="!bg-blue-600 w-2 h-2 absolute -left-2 top-1/2 -translate-y-1/2"
+                className="w-2 h-2 absolute -left-2 top-1/2 -translate-y-1/2 bg-primary"
               />
 
               {!edit ? (
@@ -366,9 +356,13 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
                         {col.key === "PK" ? "🔑" : col.key === "FK" ? "🔗" : ""}
                       </span>
                     )}
-                    <span className="font-medium">{col.title}</span>
+                    <span className="font-medium text-foreground">
+                      {col.title}
+                    </span>
                   </span>
-                  <span className="text-gray-500 text-xs">{col.type}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {col.type}
+                  </span>
                 </span>
               ) : (
                 <>
@@ -378,7 +372,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
                       onChange={(e) =>
                         updateCol(idx, "key", e.target.value as KeyKind)
                       }
-                      className="rounded border border-gray-300 text-xs focus:border-blue-400 bg-white w-[52px]"
+                      className="rounded border border-border text-xs focus:border-primary bg-background w-[52px] transition-colors"
                       disabled={busy}
                     >
                       <option value="">None</option>
@@ -388,21 +382,21 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
                     <input
                       value={col.title}
                       onChange={(e) => updateCol(idx, "title", e.target.value)}
-                      className="border-b border-gray-200 focus:border-blue-400 bg-transparent px-1 py-0.5 w-20 text-xs"
+                      className="border-b border-border focus:border-primary bg-transparent px-1 py-0.5 w-20 text-xs text-foreground transition-colors"
                       disabled={busy}
                     />
                   </span>
                   <input
                     value={col.type}
                     onChange={(e) => updateCol(idx, "type", e.target.value)}
-                    className="border-b border-gray-200 focus:border-blue-400 bg-transparent px-1 py-0.5 w-14 text-xs text-gray-700"
+                    className="border-b border-border focus:border-primary bg-transparent px-1 py-0.5 w-14 text-xs text-foreground transition-colors"
                     disabled={busy}
                   />
                   <button
                     type="button"
                     title="Delete row"
                     onClick={() => handleDeleteCol(idx)}
-                    className="ml-2 text-red-500 hover:text-red-700 p-1 disabled:opacity-50"
+                    className="ml-2 text-destructive hover:text-destructive/80 p-1 disabled:opacity-50 transition-colors"
                     disabled={busy}
                   >
                     {busy ? (
@@ -419,7 +413,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
                 type="source"
                 position={Position.Right}
                 id={`${col.id}-right`}
-                className="!bg-blue-600 w-2 h-2 absolute -right-2 top-1/2 -translate-y-1/2"
+                className="w-2 h-2 absolute -right-2 top-1/2 -translate-y-1/2 bg-primary"
               />
             </div>
           );
@@ -431,7 +425,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
         <button
           type="button"
           onClick={handleAddRow}
-          className="flex items-center justify-center w-full gap-1 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 py-1 transition"
+          className="flex items-center justify-center w-full gap-1 text-primary hover:text-primary/80 bg-primary/10 dark:bg-primary/15 hover:bg-primary/15 py-1 transition-colors"
           disabled={saving}
         >
           <Plus size={16} />
