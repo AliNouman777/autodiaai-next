@@ -1,126 +1,101 @@
-import {
-  CodeIcon,
-  DatabaseIcon,
-  Table,
-  BookOpenIcon,
-  GraduationCapIcon,
-  HandshakeIcon,
-} from "lucide-react";
+// components/sections/UseCases.tsx
+"use client";
 
-const useCases = [
+import type { ReactNode } from "react";
+import {
+  Code2,
+  Database,
+  Server,
+  GraduationCap,
+  GitBranch,
+  Layers,
+} from "lucide-react";
+import Button from "../common/Button";
+
+type Item = { icon: ReactNode; title: string; desc: string };
+
+const ITEMS: Item[] = [
   {
-    icon: CodeIcon,
-    title: "Developers",
-    description:
-      "Quickly prototype database schemas before implementation. Generate DDL scripts and validate relationships early in development.",
-    benefits: ["Rapid prototyping", "DDL generation", "API planning"],
-    color: "green",
+    icon: <Code2 className="h-6 w-6 text-primary" />,
+    title: "Backend Developers",
+    desc: "Go from spec to ERD in minutes. Iterate quickly and export SQL for migrations.",
   },
   {
-    icon: DatabaseIcon,
-    title: "Data Engineers",
-    description:
-      "Design data pipelines and warehouse schemas. Visualize complex data relationships and optimize for performance.",
-    benefits: ["Pipeline design", "Schema optimization", "Data modeling"],
-    color: "blue",
+    icon: <Database className="h-6 w-6 text-primary" />,
+    title: "Database Engineers / DBAs",
+    desc: "Normalize schemas, validate keys & relations, and keep diagrams aligned with DDL.",
   },
   {
-    icon: Table,
-    title: "Architects",
-    description:
-      "Document system architecture and communicate database design decisions to stakeholders and development teams.",
-    benefits: [
-      "System documentation",
-      "Stakeholder communication",
-      "Design reviews",
-    ],
-    color: "purple",
+    icon: <Layers className="h-6 w-6 text-primary" />,
+    title: "Startup & Product Teams",
+    desc: "Align on the data model early and share a single source of truth with stakeholders.",
   },
   {
-    icon: BookOpenIcon,
-    title: "Educators",
-    description:
-      "Create teaching materials and examples for database design courses. Help students understand entity relationships visually.",
-    benefits: ["Course materials", "Visual learning", "Assignment creation"],
-    color: "orange",
+    icon: <Server className="h-6 w-6 text-primary" />,
+    title: "Data & Analytics",
+    desc: "Document sources and models today; lineage and pipeline maps are coming soon.",
   },
   {
-    icon: GraduationCapIcon,
-    title: "Students",
-    description:
-      "Learn database design concepts through hands-on practice. Complete assignments and projects with professional-quality diagrams.",
-    benefits: [
-      "Assignment completion",
-      "Concept learning",
-      "Project documentation",
-    ],
-    color: "red",
+    icon: <GitBranch className="h-6 w-6 text-primary" />,
+    title: "GraphQL / Prisma Teams",
+    desc: "Visualize types and relations, import schemas, and keep models consistent.",
   },
   {
-    icon: HandshakeIcon,
-    title: "Consultants",
-    description:
-      "Rapidly create client proposals and documentation. Demonstrate database solutions with clear, professional visuals.",
-    benefits: [
-      "Client proposals",
-      "Solution documentation",
-      "Professional presentations",
-    ],
-    color: "teal",
+    icon: <GraduationCap className="h-6 w-6 text-primary" />,
+    title: "Students & Educators",
+    desc: "Learn ER modeling with instant visual feedback and clean exports for assignments.",
   },
 ];
 
-const colorMap = {
-  green: "bg-green-100 text-green-600",
-  blue: "bg-blue-100 text-blue-600",
-  purple: "bg-purple-100 text-purple-600",
-  orange: "bg-orange-100 text-orange-600",
-  red: "bg-red-100 text-red-600",
-  teal: "bg-teal-100 text-teal-600",
-};
-
 export default function UseCases() {
   return (
-    <section className="py-20 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-slate-900 mb-4">
-            Built for{" "}
-            <span className="bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">
-              Database Teams
-            </span>
+    <section id="use-cases" className="relative py-20">
+      {/* subtle background wash */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
+      <div className="relative mx-auto max-w-7xl px-6">
+        {/* Heading */}
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Use Cases
           </h2>
-          <p className="text-xl text-slate-600">
-            Trusted by professionals who design and work with databases
+          <p className="mt-4 text-muted-foreground">
+            See how teams use Autodia AI to design, iterate, and ship faster.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {useCases.map((useCase, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-8 border border-slate-200 hover:shadow-lg transition-all duration-300"
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ITEMS.map((it) => (
+            <article
+              key={it.title}
+              className="group relative rounded-2xl border border-border bg-card p-6 lg:p-7 shadow-sm transition-all hover:shadow-md hover-lift"
             >
-              <div
-                className={`w-12 h-12 ${
-                  colorMap[useCase.color as keyof typeof colorMap]
-                } rounded-xl flex items-center justify-center mb-6`}
-              >
-                <useCase.icon className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-4">
-                {useCase.title}
-              </h3>
-              <p className="text-slate-600 leading-relaxed mb-4">
-                {useCase.description}
+              {/* corner glow */}
+              <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-primary/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <header className="flex items-start gap-4">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
+                  {it.icon}
+                </span>
+                <h3 className="text-lg font-semibold leading-snug text-foreground">
+                  {it.title}
+                </h3>
+              </header>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {it.desc}
               </p>
-              <ul className="text-sm text-slate-500 space-y-2">
-                {useCase.benefits.map((benefit, idx) => (
-                  <li key={idx}>• {benefit}</li>
-                ))}
-              </ul>
-            </div>
+              <div className="mt-6 h-1 w-16 rounded-full bg-primary/20 group-hover:bg-primary/35 transition-colors" />
+            </article>
           ))}
+        </div>
+
+        {/* CTA */}
+        <div className="mt-12 flex justify-center">
+          <Button
+            href="/diagram"
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-full hover:bg-primary/90 transition-colors cursor-pointer"
+          >
+            Start free — generate your ERD
+          </Button>
         </div>
       </div>
     </section>

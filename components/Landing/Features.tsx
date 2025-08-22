@@ -1,70 +1,97 @@
-// Features.tsx
-import { featuresData } from "@/data/featuresData"; 
-import Image from "next/image";
+// components/sections/FeaturesGrid.tsx
+"use client";
 
-export function Features() {
+import type { ReactNode } from "react";
+import { Brain, Edit3, Key, Download, UserCheck, Layers } from "lucide-react";
+
+type Feature = {
+  title: string;
+  desc: string;
+  icon: ReactNode;
+};
+
+const FEATURES: Feature[] = [
+  {
+    title: "AI-Powered ERD Generator",
+    desc: "Turn natural language prompts into clean Entity Relationship Diagrams (ERDs) instantly.",
+    icon: <Brain className="h-6 w-6 text-primary" />,
+  },
+  {
+    title: "Interactive Diagram Editor",
+    desc: "Drag, rename, and restructure tables and relationships directly on the canvas.",
+    icon: <Edit3 className="h-6 w-6 text-primary" />,
+  },
+  {
+    title: "Smart Keys & Relationships",
+    desc: "Automatic detection of primary and foreign keys makes your database schema accurate by default.",
+    icon: <Key className="h-6 w-6 text-primary" />,
+  },
+  {
+    title: "Easy Export Options",
+    desc: "Download diagrams as PNG images (JSON for free users, SVG coming soon for Pro).",
+    icon: <Download className="h-6 w-6 text-primary" />,
+  },
+  {
+    title: "No Login to Start",
+    desc: "Generate up to 4 diagrams as a guest — no account required.",
+    icon: <UserCheck className="h-6 w-6 text-primary" />,
+  },
+  {
+    title: "Future-Ready Platform",
+    desc: "More diagram types (UML, flowcharts, org charts, and more) are on the roadmap.",
+    icon: <Layers className="h-6 w-6 text-primary" />,
+  },
+];
+
+export function FeaturesGrid() {
   return (
-    <section className="py-20 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-slate-900 mb-4">
-            Built for{" "}
-            <span className="bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">
-              Modern Diagramming
-            </span>
+    <section className="relative py-20">
+      {/* soft background wash */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
+
+      <div className="relative mx-auto max-w-7xl px-6">
+        {/* Heading */}
+        <div className="text-center max-w-2xl mx-auto mb-14 animate-fade-in">
+          <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Powerful Features for Smarter Diagramming
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-            All the AI-powered tools you need to design, edit, and export
-            professional diagrams—no design skills required.
+          <p className="mt-4 text-muted-foreground">
+            With Autodia AI you can go from plain text to interactive database
+            diagrams in seconds. Edit, refine, and export with ease.
           </p>
         </div>
 
-        <div>
-          <section className="sm:py-10 bg-white">
-            <div className="max-w-6xl mx-auto px-4 space-y-20">
-              {featuresData.map((feature, idx) => {
-                const isImageRight = idx % 2 === 0;
-                return (
-                  <div
-                    key={feature.title}
-                    className={`flex flex-col md:flex-row items-center gap-12 md:gap-20 ${
-                      isImageRight ? "" : "md:flex-row-reverse"
-                    }`}
-                  >
-                    {/* IMAGE */}
-                    <div className="flex-1 w-full">
-                      <Image
-                        src={feature.src}
-                        alt={feature.title}
-                        className="rounded-2xl shadow-lg object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        priority={idx === 0}
-                      />
-                    </div>
-                    {/* CONTENT */}
-                    <div className="flex-1 w-full">
-                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
-                        {feature.title}
-                      </h3>
-                      <p className="text-lg text-slate-700 mb-6">
-                        {feature.description}
-                      </p>
-                      {feature.ctaText && (
-                        <a
-                          href={feature.ctaLink}
-                          className="inline-block px-6 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-blue-800 transition"
-                        >
-                          {feature.ctaText}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up">
+          {FEATURES.map((f) => (
+            <article
+              key={f.title}
+              className="group relative rounded-2xl border border-border bg-card p-6 lg:p-7 shadow-sm transition-all hover:shadow-md hover-lift"
+            >
+              {/* corner glow */}
+              <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-primary/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <header className="flex items-start gap-4">
+                <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 ring-1 ring-primary/15">
+                  {f.icon}
+                </span>
+                <h3 className="text-lg font-semibold leading-snug text-foreground">
+                  {f.title}
+                </h3>
+              </header>
+
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {f.desc}
+              </p>
+
+              {/* bottom accent */}
+              <div className="mt-6 h-1 w-16 rounded-full bg-primary/20 group-hover:bg-primary/35 transition-colors" />
+            </article>
+          ))}
         </div>
       </div>
     </section>
   );
 }
+
+export default FeaturesGrid;

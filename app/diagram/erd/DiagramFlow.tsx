@@ -455,7 +455,7 @@ const DiagramFlow: React.FC<Props> = ({
       {/* Bottom controls: Dock + Edge-type dropdown */}
       <div
         data-export-exclude="true"
-        className="absolute bottom-2 inset-x-0 mx-auto w-fit z-30 flex items-center gap-2"
+        className="absolute bottom-2 inset-x-0 m-1 md:mx-auto w-fit z-30 flex items-center gap-2"
       >
         <FloatingDock
           items={[

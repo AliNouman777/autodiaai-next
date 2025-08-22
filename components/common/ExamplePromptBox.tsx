@@ -20,7 +20,9 @@ type ExamplePromptBoxProps = {
   onPick: (promptText: string) => void;
   defaultOpen?: boolean;
   className?: string;
-  title?: string; // label text (defaults to "Example Prompts")
+  title?: string;
+  /** Close the box after picking a prompt (default: true) */
+  closeOnPick?: boolean;
 };
 
 const ExamplePromptBox: React.FC<ExamplePromptBoxProps> = ({
@@ -29,6 +31,7 @@ const ExamplePromptBox: React.FC<ExamplePromptBoxProps> = ({
   defaultOpen = false,
   className,
   title = "Example Prompts",
+  closeOnPick = true,
 }) => {
   const [open, setOpen] = React.useState(defaultOpen);
 
@@ -54,7 +57,10 @@ const ExamplePromptBox: React.FC<ExamplePromptBoxProps> = ({
             <button
               key={idx}
               type="button"
-              onClick={() => onPick(ex.prompt)}
+              onClick={() => {
+                onPick(ex.prompt);
+                if (closeOnPick) setOpen(false); // 👈 collapse after selecting
+              }}
               className="
                 w-full text-left p-4 rounded-lg
                 border border-border

@@ -1,129 +1,182 @@
-import {
-  ChartScatter,
-  TwitterIcon,
-  GithubIcon,
-  LinkedinIcon,
-} from "lucide-react";
-import Image from "next/image";
+// components/sections/Footer.tsx
+"use client";
+
 import Link from "next/link";
-import Logo from "@/public/logo.png";
+import { Mail, Github, Twitter, Linkedin } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="py-16 bg-slate-900 text-slate-300">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-8">
-          {/* Company Info */}
+    <footer className="relative border-t border-border">
+      {/* subtle blueish wash */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+          {/* Brand / blurb */}
           <div className="md:col-span-2">
-            <div className="flex items-center space-x-2 mb-6">
-              <span className="text-xl font-bold text-white -ml-8">
-                <div className="flex items-center space-x-2 ">
-                  <Image
-                    src={Logo}
-                    alt="Company logo"
-                    width={60}
-                    height={48}
-                    priority
-                    className="w-auto h-auto"
-                  />
-                  <div className="-ml-5 text-2xl font-bold flex items-center ">
-                    <span className="text-white">Auto</span>
-                    <span className="text-blue-500">Dia</span>
-                    &nbsp;
-                    <span className="text-white"> Ai</span>
-                  </div>
-                </div>
+            <Link href="/" className="inline-flex items-center space-x-2">
+              <span className="text-xl font-bold text-foreground">
+                Auto<span className="text-primary">Dia</span> AI
               </span>
-            </div>
-            <p className="text-slate-400 leading-relaxed mb-6 max-w-md">
-              The leading AI-powered Entity-Relationship Diagram generator.
-              Transform database requirements into professional ERDs with SQL
-              DDL export. Trusted by 10,000+ developers worldwide.
+            </Link>
+            <p className="mt-3 text-sm text-muted-foreground max-w-prose">
+              Autodia AI turns plain text into clean, editable Entity
+              Relationship Diagrams. Start free—no login required.
             </p>
-            <div className="flex space-x-4">
-              <Link
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors"
-                aria-label="Follow us on Twitter"
+
+            {/* Newsletter */}
+            <form
+              className="mt-6 flex w-full max-w-md items-center gap-2"
+              onSubmit={(e) => e.preventDefault()}
+            >
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <button
+                aria-label="Subscribe"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                <TwitterIcon className="h-5 w-5" />
+                Subscribe
+              </button>
+            </form>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Get product updates and schema tips—about once a month. By
+              subscribing, you agree to our{" "}
+              <Link href="/privacy" className="underline underline-offset-4">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+
+            {/* Social */}
+            <div className="mt-6 flex items-center gap-3">
+              <Link
+                href="mailto:hello@autodia.ai"
+                aria-label="Email"
+                className="group"
+              >
+                <Mail className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </Link>
               <Link
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors"
-                aria-label="Star us on GitHub"
+                href="https://github.com/"
+                target="_blank"
+                aria-label="GitHub"
+                className="group"
               >
-                <GithubIcon className="h-5 w-5" />
+                <Github className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </Link>
               <Link
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors"
-                aria-label="Connect on LinkedIn"
+                href="https://twitter.com/"
+                target="_blank"
+                aria-label="Twitter/X"
+                className="group"
               >
-                <LinkedinIcon className="h-5 w-5" />
+                <Twitter className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </Link>
+              <Link
+                href="https://www.linkedin.com/"
+                target="_blank"
+                aria-label="LinkedIn"
+                className="group"
+              >
+                <Linkedin className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </Link>
             </div>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Product</h3>
-            <ul className="space-y-3 text-slate-400">
-              {/* <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Documentation
-                </Link>
-              </li> */}
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  API Reference
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Changelog
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Roadmap
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support Links */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Support</h3>
-            <ul className="space-y-3 text-slate-400">
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                {/* <Link href="#" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Li> */}
-              </li>
-            </ul>
+          {/* Link columns */}
+          <div className="grid grid-cols-2 gap-10 md:col-span-2">
+            <FooterCol
+              title="Product"
+              links={[
+                { label: "ERD Generator", href: "/diagram" },
+                { label: "Pricing", href: "/#pricing" },
+                { label: "Roadmap", href: "/#roadmap" },
+                { label: "FAQ", href: "/#faq" },
+              ]}
+            />
+            <FooterCol
+              title="Resources"
+              links={[
+                { label: "Docs", href: "/docs" },
+                { label: "Changelog", href: "/changelog" },
+                { label: "Status", href: "/status" },
+                { label: "Contact", href: "/contact" },
+              ]}
+            />
+            <FooterCol
+              title="Company"
+              links={[
+                { label: "About", href: "/about" },
+                { label: "Careers (soon)", href: "/careers" },
+                { label: "Pro Waitlist", href: "/waitlist" },
+              ]}
+            />
+            <FooterCol
+              title="Legal"
+              links={[
+                { label: "Privacy", href: "/privacy" },
+                { label: "Terms", href: "/terms" },
+                { label: "Security", href: "/security" },
+                { label: "Cookies", href: "/cookies" },
+              ]}
+            />
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-2 pt-8 text-center text-slate-400">
-          <p>&copy; 2025 AutoDia AI. All rights reserved.</p>
+        {/* Bottom bar */}
+        <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-border pt-6">
+          <p className="text-xs text-muted-foreground">
+            © 2025 Autodia AI. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <span aria-hidden>•</span>
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <span aria-hidden>•</span>
+            <Link href="/security" className="hover:text-foreground">
+              Security
+            </Link>
+            <span aria-hidden>•</span>
+            <Link href="/status" className="hover:text-foreground">
+              Status
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; href: string }[];
+}) {
+  return (
+    <nav aria-label={title}>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <ul className="mt-3 space-y-2">
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link
+              href={l.href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

@@ -61,7 +61,6 @@ export default function CreateDiagramSheet({
         router.push(`/diagram/${doc.type}/${doc._id}`);
       });
       toast.success("Diagram created!");
-      setOpen(false);
     } catch (err: any) {
       toast.error(err?.message || "Something went wrong.");
     } finally {
@@ -112,7 +111,9 @@ export default function CreateDiagramSheet({
                 onValueChange={(v) => setType(v as DiagramType)}
                 disabled={busy}
               >
-                <SelectTrigger id="diagram-type" className="w-full" />
+                <SelectTrigger id="diagram-type" className="w-full">
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
                 {/* Make the dropdown popover themed as well */}
                 <SelectContent className="bg-popover text-popover-foreground border border-border">
                   <SelectItem value="erd">ERD</SelectItem>
@@ -123,7 +124,12 @@ export default function CreateDiagramSheet({
           </div>
 
           <SheetFooter className="gap-2">
-            <Button type="submit" disabled={busy} aria-disabled={busy}>
+            <Button
+              type="submit"
+              disabled={busy}
+              aria-disabled={busy}
+              className="cursor-pointer"
+            >
               {busy ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />
@@ -134,7 +140,12 @@ export default function CreateDiagramSheet({
               )}
             </Button>
             <SheetClose asChild>
-              <Button type="button" variant="outline" disabled={busy}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                className="cursor-pointer"
+              >
                 Cancel
               </Button>
             </SheetClose>

@@ -1,19 +1,19 @@
 // components/diagramcanvas/markers.tsx
 export function Markers({
-  color, // override, e.g. hover blue
-  background = "var(--background)",
+  color,
+  background = "hsl(var(--background))", // ✅ correct token usage
 }: {
   color?: string;
   background?: string;
 }) {
   const strokeWidth = color?.trim() === "#0042ff" ? 1.5 : 1;
 
-  // Use currentColor when no explicit color is provided
   const svgStyle: React.CSSProperties = {
     pointerEvents: "none",
-    color: color ? undefined : "var(--marker-stroke)", // theme-driven
+    color: color ? undefined : "var(--marker-stroke)",
   };
   const strokeValue = color?.trim() || "currentColor";
+  const fillBg = background; // resolve once for clarity
 
   return (
     <svg width="0" height="0" style={svgStyle}>
@@ -113,7 +113,7 @@ export function Markers({
             cx="-2"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -140,7 +140,7 @@ export function Markers({
             cx="12"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -162,7 +162,7 @@ export function Markers({
             cx="-5"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -190,7 +190,7 @@ export function Markers({
             cx="15"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -219,7 +219,7 @@ export function Markers({
             cx="5"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
@@ -240,7 +240,7 @@ export function Markers({
             cx="5"
             cy="5"
             r="4"
-            style={{ fill: "var(--background)" }}
+            fill={fillBg}
             stroke={strokeValue}
             strokeWidth={strokeWidth}
             vectorEffect="non-scaling-stroke"
