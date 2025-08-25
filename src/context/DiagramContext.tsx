@@ -268,8 +268,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       if (opts.schema) params.set("schema", opts.schema);
       if (opts.filename) params.set("filename", opts.filename);
 
-      const baseUrlRef =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const baseUrlRef = "https://api.autodia.tech";
       const url = `${baseUrlRef}/api/diagrams/${id}/export.sql?${params.toString()}`;
       const res = await fetch(url, {
         method: "GET",

@@ -1,5 +1,5 @@
 // lib/api.ts
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const BASE_URL = "https://api.autodia.tech";
 
 export class ApiError extends Error {
   status?: number;
