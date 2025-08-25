@@ -1,6 +1,4 @@
 // components/sections/FeaturesGrid.tsx
-"use client";
-
 import type { ReactNode } from "react";
 import { Brain, Edit3, Key, Download, UserCheck, Layers } from "lucide-react";
 
