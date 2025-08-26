@@ -10,7 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/diagram/erd/"], // block private/API routes
       },
     ],
-    sitemap: "https://www.autodia.tech/sitemap.xml",
-    host: "https://www.autodia.tech",
+    sitemap: "https://www.autodia.tech/sitemap.xml"
   };
 }
