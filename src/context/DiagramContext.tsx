@@ -605,10 +605,10 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Measure DOM bounds
       const box = getGraphBBox(container);
-      let x = Math.max(0, Math.floor(box.x - PAD));
-      let y = Math.max(0, Math.floor(box.y - PAD));
-      let w = Math.ceil(box.w + PAD * 2);
-      let h = Math.ceil(box.h + PAD * 2);
+      const x = Math.max(0, Math.floor(box.x - PAD));
+      const y = Math.max(0, Math.floor(box.y - PAD));
+      const w = Math.ceil(box.w + PAD * 2);
+      const h = Math.ceil(box.h + PAD * 2);
 
       // Theme-aware background for export
       const exportBg = resolveExportBg(container);
