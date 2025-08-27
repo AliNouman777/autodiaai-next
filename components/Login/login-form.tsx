@@ -16,6 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
+
 type Props = React.ComponentProps<"div">;
 
 export function LoginForm({ className, ...props }: Props) {
@@ -26,9 +28,14 @@ export function LoginForm({ className, ...props }: Props) {
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
+  // local state for the Google button only
+  const [googleLoading, setGoogleLoading] = React.useState(false);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading || googleLoading) return;
     setError(null);
+
     try {
       await login(email, password);
       router.replace("/diagram");
@@ -38,8 +45,12 @@ export function LoginForm({ className, ...props }: Props) {
   }
 
   function handleGoogleLogin() {
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    window.location.href = `${base}/api/auth/oauth/google`;
+    if (googleLoading) return;
+    setGoogleLoading(true); // start spinner
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const url = `${base}/auth/google/login`;
+    // full page navigation (preserves httpOnly cookies on callback)
+    window.location.assign(url);
   }
 
   return (
@@ -51,29 +62,38 @@ export function LoginForm({ className, ...props }: Props) {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={onSubmit} className="grid gap-6">
+          <form onSubmit={onSubmit} className="grid gap-6" noValidate>
             <div className="flex flex-col gap-4">
               <Button
                 type="button"
                 variant="outline"
                 className="w-full cursor-pointer"
                 onClick={handleGoogleLogin}
-                disabled={loading}
+                disabled={loading || googleLoading}
                 aria-label="Login with Google"
               >
-                {/* Google SVG */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="mr-2 h-4 w-4"
-                >
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                    fill="#2196F3"
-                  />
-                </svg>
-                Login with Google
+                {googleLoading ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                    Redirecting…
+                  </>
+                ) : (
+                  <>
+                    {/* Google SVG */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      className="mr-2 h-4 w-4"
+                    >
+                      <path
+                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                        fill="#2196F3"
+                      />
+                    </svg>
+                    Login with Google
+                  </>
+                )}
               </Button>
             </div>
 
@@ -94,7 +114,7 @@ export function LoginForm({ className, ...props }: Props) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || googleLoading}
                 />
               </div>
 
@@ -115,15 +135,19 @@ export function LoginForm({ className, ...props }: Props) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || googleLoading}
                 />
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || googleLoading}
                 className="bg-blue-500 ml-2 text-white px-6 py-2 rounded-full cursor-pointer hover:bg-blue-700 transition-all duration-300 font-medium hover-lift transform hover:scale-105 animate-glow disabled:opacity-60"
               >
                 {loading ? "Signing in…" : "Login"}
@@ -144,8 +168,8 @@ export function LoginForm({ className, ...props }: Props) {
       </Card>
 
       <div className="text-muted-foreground text-center text-xs text-balance underline-offset-4">
-        By clicking continue, you agree to our{" "}
-        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        and <a href="#">Privacy Policy</a>.
       </div>
     </div>
   );

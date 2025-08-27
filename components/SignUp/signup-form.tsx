@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/src/context/AuthContext"; // expects signup(first,last,email,pwd)
+import { useAuth } from "@/src/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Props = React.ComponentProps<"div">;
+// 👇 import your Spinner component (adjust path as needed)
+import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 
 export function SignupForm({
   className,
@@ -32,7 +33,8 @@ export function SignupForm({
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
-
+  // 👇 new local state for Google button
+  const [googleLoading, setGoogleLoading] = React.useState(false);
 
   const validate = () => {
     const e = email.trim();
@@ -65,31 +67,8 @@ export function SignupForm({
       return;
     }
 
-    const eTrim = email.trim();
-
     try {
-      // Preferred: via AuthContext (httpOnly cookies handled server-side)
-      await signup(firstName.trim(), lastName.trim(), eTrim, password);
-
-      // If your AuthContext doesn't have the extended signature yet,
-      // you can temporarily do a direct call:
-      /*
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${base}/api/auth/register`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email: eTrim, password }),
-      });
-      const json = await res.json();
-      if (!res.ok || json?.success === false) {
-        const msg = json?.error?.message || "Sign up failed";
-        const code = json?.error?.code;
-        throw Object.assign(new Error(msg), { code, status: res.status, data: json });
-      }
-      // Optionally: await refreshMe();
-      */
-
+      await signup(firstName.trim(), lastName.trim(), email.trim(), password);
       toast.success("Account created! Welcome 👋");
       router.replace("/");
     } catch (err: any) {
@@ -97,10 +76,8 @@ export function SignupForm({
         err?.data?.error?.message ||
         err?.message ||
         "Sign up failed. Please try again.";
-
       setError(msg);
 
-      // Friendly mapping for common cases
       if (err?.status === 409 || err?.code === "EMAIL_TAKEN") {
         toast.error("This email is already registered.");
       } else if (err?.status === 400) {
@@ -112,12 +89,11 @@ export function SignupForm({
   }
 
   function handleGoogleSignup() {
-    if (loading) return;
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    toast.loading("Redirecting to Google…", { id: "google-oauth" });
-    setTimeout(() => {
-      window.location.href = `${base}/api/auth/oauth/google`;
-    }, 100);
+    setGoogleLoading(true); // 👈 start spinner
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const url = `${base}/auth/google/login`;
+    // full page navigation (preserves cookies set on callback)
+    window.location.assign(url);
   }
 
   return (
@@ -129,7 +105,6 @@ export function SignupForm({
         </CardHeader>
 
         <CardContent>
-          {/* ✅ Single real form */}
           <form onSubmit={onSubmit} className="grid gap-6" noValidate>
             <div className="flex flex-col gap-4">
               <Button
@@ -137,21 +112,25 @@ export function SignupForm({
                 variant="outline"
                 className="w-full cursor-pointer"
                 onClick={handleGoogleSignup}
-                disabled={loading}
+                disabled={loading || googleLoading}
                 aria-label="Sign up with Google"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="mr-2 h-4 w-4"
-                >
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                    fill="#2196F3"
-                  />
-                </svg>
-                Sign up with Google
+                {googleLoading ? (
+                  <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="mr-2 h-4 w-4"
+                  >
+                    <path
+                      d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                      fill="#2196F3"
+                    />
+                  </svg>
+                )}
+                {googleLoading ? "Redirecting…" : "Sign up with Google"}
               </Button>
             </div>
 
