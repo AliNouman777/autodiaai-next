@@ -50,12 +50,12 @@ export function AppSidebar() {
                 <Image
                   src={Logo}
                   alt="Company logo"
-                  width={60}
-                  height={48}
+                  width={30}
+                  height={40}
                   priority
                   className="w-auto h-auto"
                 />
-                <div className="-ml-5 text-xl font-semibold flex items-center">
+                <div className="-ml-2 text-xl font-semibold flex items-center">
                   <span className="text-foreground">Auto</span>
                   <span className="text-primary">Dia</span>&nbsp;
                   <span className="text-foreground">Ai</span>
