@@ -15,7 +15,7 @@ const Features = dynamicImport(() => import("@/components/Landing/Features"), {
   loading: () => null,
 });
 const FuturePlan = dynamicImport(
-  () => import("@/components/common/FuturePlan"),
+  () => import("@/components/Landing/FuturePlan"),
   {
     loading: () => null,
   }

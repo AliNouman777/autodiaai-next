@@ -118,7 +118,7 @@ export function LoginForm({ className, ...props }: Props) {
               </div>
 
               <div className="grid gap-3">
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/forgot-password"
@@ -126,7 +126,7 @@ export function LoginForm({ className, ...props }: Props) {
                   >
                     Forgot your password?
                   </Link>
-                </div>
+                </div> */}
                 <Input
                   id="password"
                   type="password"

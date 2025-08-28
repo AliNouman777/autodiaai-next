@@ -54,14 +54,14 @@ export default function Footer() {
             {/* Social */}
             <div className="mt-6 flex items-center gap-3">
               <Link
-                href="mailto:hello@autodia.ai"
+                href="mailto:alinouman6348248@gmail.com"
                 aria-label="Email"
                 className="group"
               >
                 <Mail className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </Link>
               <Link
-                href="https://github.com/"
+                href="https://github.com/AliNouman777/autodiaai-next"
                 target="_blank"
                 aria-label="GitHub"
                 className="group"
@@ -100,29 +100,15 @@ export default function Footer() {
             />
             <FooterCol
               title="Resources"
-              links={[
-                { label: "Docs", href: "/docs" },
-                { label: "Changelog", href: "/changelog" },
-                { label: "Status", href: "/status" },
-                { label: "Contact", href: "/contact" },
-              ]}
+              links={[{ label: "Contact", href: "#" }]}
             />
             <FooterCol
               title="Company"
-              links={[
-                { label: "About", href: "/about" },
-                { label: "Careers (soon)", href: "/careers" },
-                { label: "Pro Waitlist", href: "/waitlist" },
-              ]}
+              links={[{ label: "About", href: "/about" }]}
             />
             <FooterCol
               title="Legal"
-              links={[
-                { label: "Privacy", href: "/privacy" },
-                { label: "Terms", href: "/terms" },
-                { label: "Security", href: "/security" },
-                { label: "Cookies", href: "/cookies" },
-              ]}
+              links={[{ label: "Privacy", href: "/privacy" }]}
             />
           </div>
         </div>

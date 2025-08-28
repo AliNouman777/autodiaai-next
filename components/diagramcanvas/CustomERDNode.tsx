@@ -263,7 +263,7 @@ export default function CustomERDNode({ id, data }: CustomERDNodeProps) {
 
   return (
     <div
-      className={`min-w-[200px] rounded-lg bg-card border border-border shadow  transition-shadow font-sans text-xs duration-150 relative group ${glowClasses}`}
+      className={`min-w-[250px] rounded-lg bg-card border border-border shadow  transition-shadow font-sans text-xs duration-150 relative group ${glowClasses}`}
       onMouseEnter={data.onNodeHover}
       onMouseLeave={data.onNodeUnhover}
     >

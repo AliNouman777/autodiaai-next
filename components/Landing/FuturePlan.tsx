@@ -3,7 +3,7 @@
 
 import type { ReactNode } from "react";
 import { Timeline } from "@/src/components/ui/timeline";
-import Button from "./Button";
+import Button from "../common/Button";
 
 type TimelineEntry = {
   title: string;
@@ -132,7 +132,7 @@ const DATA: TimelineEntry[] = [
 
 export default function RoadmapTimeline() {
   return (
-    <section className="relative py-20">
+    <section id="roadmap" className="relative py-20">
       {/* soft background wash */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
       <div className="relative mx-auto max-w-7xl px-6">
