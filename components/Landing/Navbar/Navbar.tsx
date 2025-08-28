@@ -40,11 +40,11 @@ export default function AppNavbar() {
           <Image
             src={Logo}
             alt="Autodia AI logo"
-            width={60}
-            height={48}
+            width={40}
+            height={40}
             priority
           />
-          <div className="-ml-5 text-2xl font-bold">
+          <div className="-ml-2 text-2xl font-bold">
             <span className="text-foreground">Auto</span>
             <span className="text-primary">Dia</span>{" "}
             <span className="text-foreground">AI</span>
