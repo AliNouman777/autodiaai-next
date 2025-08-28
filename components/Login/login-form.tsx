@@ -48,7 +48,7 @@ export function LoginForm({ className, ...props }: Props) {
     if (googleLoading) return;
     setGoogleLoading(true); // start spinner
     const base = process.env.NEXT_PUBLIC_API_URL;
-    const url = `https://api.autodia.tech/auth/google/login`;
+    const url = `${base}/auth/google/login`;
     // full page navigation (preserves httpOnly cookies on callback)
     window.location.assign(url);
   }

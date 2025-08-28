@@ -309,7 +309,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
 
   /* ----------------------- Node Schema CRUD (frontend) ---------------------- */
 
-  const baseURL = "https://api.autodia.tech";
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
   const updateNodeLabel = useCallback(
     async (diagramId: string, nodeId: string, label: string) => {
