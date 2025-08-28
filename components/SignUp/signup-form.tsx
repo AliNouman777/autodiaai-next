@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 
 // 👇 import your Spinner component (adjust path as needed)
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
+import BASE_URL from "@/BaseUrl";
 
 export function SignupForm({
   className,
@@ -90,8 +91,7 @@ export function SignupForm({
 
   function handleGoogleSignup() {
     setGoogleLoading(true); // 👈 start spinner
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-    const url = `${base}/auth/google/login`;
+    const url = `${BASE_URL}/auth/google/login`;
     // full page navigation (preserves cookies set on callback)
     window.location.assign(url);
   }

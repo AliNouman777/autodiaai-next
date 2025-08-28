@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import BASE_URL from "@/BaseUrl";
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 
 type Props = React.ComponentProps<"div">;
@@ -47,8 +47,7 @@ export function LoginForm({ className, ...props }: Props) {
   function handleGoogleLogin() {
     if (googleLoading) return;
     setGoogleLoading(true); // start spinner
-    const base = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${base}/auth/google/login`;
+    const url = `${BASE_URL}/auth/google/login`;
     // full page navigation (preserves httpOnly cookies on callback)
     window.location.assign(url);
   }

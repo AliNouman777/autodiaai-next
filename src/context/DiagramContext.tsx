@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
+import BASE_URL from "@/BaseUrl";
 
 /* -------------------------------- Types -------------------------------- */
 
@@ -309,7 +310,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
 
   /* ----------------------- Node Schema CRUD (frontend) ---------------------- */
 
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
+  const baseURL = BASE_URL || "";
 
   const updateNodeLabel = useCallback(
     async (diagramId: string, nodeId: string, label: string) => {

@@ -1,5 +1,5 @@
 // lib/api.ts
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+import BASE_URL from "@/BaseUrl";
 
 export class ApiError extends Error {
   status?: number;
