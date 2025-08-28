@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="t1 d1" width="256" height="256" style="color:#2FA3FF">
+  <title id="t1">AutoDia AI — A Schema with AI Dots</title>
+  <desc id="d1">Three ERD tables forming an A; crossbar shown as three inference dots.</desc>
+  <g fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">
+    <rect x="102" y="64"  width="52" height="32" rx="8"/>
+    <rect x="44"  y="152" width="52" height="36" rx="8"/>
+    <rect x="160" y="152" width="52" height="36" rx="8"/>
+    <path d="M70 152 L128 96 L186 152"/>
+  </g>
+  <g fill="currentColor" stroke="none">
+    <circle cx="108" cy="170" r="4"/>
+    <circle cx="128" cy="170" r="4"/>
+    <circle cx="148" cy="170" r="4"/>
+  </g>
+</svg>
+
