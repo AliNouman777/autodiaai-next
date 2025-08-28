@@ -2,6 +2,7 @@ import Button from "../common/Button";
 import { LayoutTemplate } from "lucide-react";
 import ERDdiagram from "@/public/erd.png";
 import Image from "next/image";
+import StatefulButton from "../common/StatefulButton";
 
 export default function Hero() {
   return (
@@ -32,13 +33,11 @@ export default function Hero() {
               className="flex flex-col sm:flex-row gap-4 mb-8 animate-slide-up"
               style={{ animationDelay: "0.6s", animationFillMode: "both" }}
             >
-              <Button
-                href="/diagram"
-                className="bg-primary text-primary-foreground px-8 py-4 rounded-full hover:bg-primary/90 transition-all duration-300 font-semibold text-lg hover-lift transform hover:scale-105 cursor-pointer flex"
-              >
-                <LayoutTemplate className="h-5 w-5 mr-2 mt-1" />
-                Start Free — Generate Your ERD
-              </Button>
+              <StatefulButton
+                navigateTo="/diagram"
+                label="Start Free — Generate Your ERD"
+              />
+
               {/* Optional secondary CTA:
               <Button
                 href="/pricing"

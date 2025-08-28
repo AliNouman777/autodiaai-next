@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     images: [
       {
         // you currently have og.png.png in /public
-        url: "/og.png.png",
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: "AutoDia AI — ERD Generator",

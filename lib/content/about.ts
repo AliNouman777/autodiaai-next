@@ -49,26 +49,14 @@ export const COMMITMENTS = [
   {
     title: "Responsible AI",
     desc: "We design prompts, post-processors, and guardrails to prefer predictable, verifiable outputs. See our Privacy and Security pages for details.",
-    links: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/security", label: "Security" },
-    ],
   },
   {
     title: "Interoperability",
     desc: "We favor widely used formats so your diagrams are useful beyond our editor. Today: PNG/JSON/SQL. Next: SVG and more.",
-    links: [
-      { href: "/docs", label: "Docs" },
-      { href: "/changelog", label: "Changelog" },
-    ],
   },
   {
     title: "Roadmap Transparency",
     desc: "We share what we’re exploring and ship iteratively with feedback from real projects.",
-    links: [
-      { href: "/roadmap", label: "Roadmap" },
-      { href: "/faq", label: "FAQ" },
-    ],
   },
 ];
 

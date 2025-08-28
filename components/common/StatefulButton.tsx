@@ -1,15 +1,15 @@
 "use client";
 import { Button } from "@/src/components/ui/stateful-button";
 import { useRouter } from "next/navigation";
-import React , {useState} from "react";
+import React, { useState } from "react";
 
 type StatefulButtonProps = {
   label: string;
   navigateTo?: string; // optional route to navigate to
-  delay?: number;      // delay in ms before action
+  delay?: number; // delay in ms before action
   onAction?: () => Promise<void> | void; // async/ sync action
   className?: string;
-  loadingText?: string; 
+  loadingText?: string;
 };
 
 const StatefulButton: React.FC<StatefulButtonProps> = ({
@@ -47,7 +47,7 @@ const StatefulButton: React.FC<StatefulButtonProps> = ({
     <Button
       onClick={handleClick}
       disabled={loading}
-      // className={`${className} ${loading ? "opacity-70 cursor-wait" : ""}`}
+      className={`${className} ${loading ? "opacity-70 cursor-wait" : ""}`}
     >
       {loading ? loadingText : label}
     </Button>
@@ -55,4 +55,3 @@ const StatefulButton: React.FC<StatefulButtonProps> = ({
 };
 
 export default StatefulButton;
-

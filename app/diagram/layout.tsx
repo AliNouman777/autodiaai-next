@@ -8,9 +8,23 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { DiagramProvider } from "@/src/context/DiagramContext";
 
 export const metadata = {
-  title: "Autodia AI — Free AI ERD Generator | Create Database Diagrams from Text",
+  title: {
+    default: "AutoDia AI — Free AI ERD Generator from Text",
+    template: "%s | AutoDia AI",
+  },
   description:
-    "Generate professional Entity Relationship Diagrams (ERDs) from plain English using Autodia AI. No login required—start free, edit, and export clean database diagrams instantly.",
+    "Turn plain English into professional ER diagrams. Start free—no login required. Edit on canvas and export PNG, JSON & SQL. Fast, accurate, and editable.",
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "AI ERD generator",
+    "ER diagram generator",
+    "generate ERD from text",
+    "online ERD Generator",
+    "database diagram tool",
+    "export ERD to SQL,PNG,JSON",
+  ],
 };
 
 export default async function Layout({

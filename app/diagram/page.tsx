@@ -9,7 +9,10 @@ export default function Page() {
     // <AuthWrapper>
     <div className="w-full gap-3 flex flex-col">
       <div className="flex w-full justify-between items-center">
-        <CreateDiagramSheet triggerLabel="Create Diagram" className="w-fit " />
+        <CreateDiagramSheet
+          triggerLabel="Create Diagram"
+          className="w-fit cursor-pointer "
+        />
       </div>
       <Suspense fallback={<TableSkeleton rows={5} />}>
         <Table />
