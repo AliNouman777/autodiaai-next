@@ -1,3 +1,4 @@
+// app/feedback/layout.tsx
 import { cookies } from "next/headers";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";

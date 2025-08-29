@@ -7,7 +7,7 @@ import Image from "next/image";
 export const metadata = {
   title: "Log In to AutoDia AI — Access Your ERD Projects",
   description:
-    "Sign in to AutoDia AI to generate, edit, and export professional Entity Relationship Diagrams (ERDs). Secure login to access saved diagrams and continue your work.",
+    "Sign in to AutoDia AI to generate, edit, and export Entity Relationship Diagrams (ERDs). Secure login to access saved diagrams.",
   alternates: {
     canonical: "https://www.autodia.tech/login",
   },

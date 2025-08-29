@@ -122,18 +122,7 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-foreground">
               Privacy
             </Link>
-            <span aria-hidden>•</span>
-            <Link href="/terms" className="hover:text-foreground">
-              Terms
-            </Link>
-            <span aria-hidden>•</span>
-            <Link href="/security" className="hover:text-foreground">
-              Security
-            </Link>
-            <span aria-hidden>•</span>
-            <Link href="/status" className="hover:text-foreground">
-              Status
-            </Link>
+    
           </div>
         </div>
       </div>
