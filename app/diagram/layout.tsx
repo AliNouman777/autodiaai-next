@@ -9,22 +9,41 @@ import { DiagramProvider } from "@/src/context/DiagramContext";
 
 export const metadata = {
   title: {
-    default: "AutoDia AI — Free AI ERD Generator from Text",
+    default: "AutoDia AI — AI ERD Generator from Text",
     template: "%s | AutoDia AI",
   },
   description:
-    "Turn plain English into professional ER diagrams. Start free—no login required. Edit on canvas and export PNG, JSON & SQL. Fast, accurate, and editable.",
-  alternates: {
-    canonical: "/",
+    "Turn plain English into professional ER diagrams. Edit on canvas and export to PNG, JSON & SQL.",
+  robots: {
+    index: true,
+    follow: true,
+    "max-snippet": -1,
+    "max-image-preview": "large",
+    "max-video-preview": -1,
   },
-  keywords: [
-    "AI ERD generator",
-    "ER diagram generator",
-    "generate ERD from text",
-    "online ERD Generator",
-    "database diagram tool",
-    "export ERD to SQL,PNG,JSON",
-  ],
+  openGraph: {
+    title: "AutoDia AI — AI ERD Generator",
+    description:
+      "Generate clean ER diagrams from text. Edit and export instantly.",
+    url: "https://www.autodia.tech",
+    siteName: "AutoDia AI",
+    type: "website",
+    images: [
+      {
+        url: "https://www.autodia.tech/og.png",
+        width: 1200,
+        height: 630,
+        alt: "AutoDia AI",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AutoDia AI — AI ERD Generator",
+    description:
+      "Generate clean ER diagrams from text. Edit and export instantly.",
+    images: ["https://www.autodia.tech/og.png"],
+  },
 };
 
 export default async function Layout({
@@ -42,7 +61,6 @@ export default async function Layout({
         <SidebarTrigger />
         <main className="flex w-[95%] mx-auto pr-8 pl-2 py-6">
           {children}
-          {/* Vercel Analytics & Speed Insights */}
           <Analytics />
           <SpeedInsights />
         </main>

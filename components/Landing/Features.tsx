@@ -43,7 +43,7 @@ const FEATURES: Feature[] = [
 
 export function FeaturesGrid() {
   return (
-    <section className="relative py-20">
+    <section id="features" className="relative py-20">
       {/* soft background wash */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
 
