@@ -6,7 +6,7 @@ import CreateDiagramSheet from "@/components/common/CreateDiagramSheet";
 
 // ✅ Strong, intent-matching metadata for this route
 export const metadata = {
-  title: "Free AI ERD Generator Online | Create ER Diagrams",
+  title: "AI ERD Generator — Create ER Diagrams",
   description:
     "Generate ER diagrams instantly from text with AutoDia AI. Free, fast, and easy-to-use ERD generator for database design and documentation.",
   alternates: {
@@ -70,12 +70,7 @@ export default function Page() {
         AI ERD Generator – Create Entity Relationship Diagrams from Text
       </h1>
 
-      {/* Tiny intro to avoid “soft-404” and clarify purpose */}
-      <p className="text-sm text-muted-foreground">
-        Use AutoDia AI to generate clean, editable ER diagrams from plain
-        English. Create your diagram, refine entities and relations on canvas,
-        and export to PNG, JSON, or SQL.
-      </p>
+     
 
       <div className="flex w-full justify-between items-center">
         <CreateDiagramSheet
