@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "motion/react";
-import Image from "next/image";
 import StatefulButton from "../common/StatefulButton";
 import Button from "../common/Button";
 
@@ -49,7 +48,7 @@ export default function Hero() {
           className="relative z-10 mx-auto max-w-2xl py-6 text-center text-lg font-normal text-muted-foreground"
         >
           Instantly build professional{" "}
-          <strong  >Entity Relationship Diagrams (ERDs)</strong> from plain text.
+          <strong>Entity Relationship Diagrams (ERDs)</strong> from plain text.
           Edit, refine, and export your diagram in seconds.
         </motion.p>
 
@@ -97,24 +96,25 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* Hero preview image */}
+        {/* Hero preview video */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 1.4 }}
-          className="relative z-10 mt-16 rounded-3xl border border-border bg-muted/50 p-4 shadow-md"
-        >
-          <div className="w-full overflow-hidden rounded-xl border border-border">
-            <Image
-              src="/erd.png"
-              alt="Autodia AI — ERD Generator Preview"
-              className="aspect-[16/9] h-auto w-full object-cover"
-              width={1000}
-              height={600}
-              priority
-            />
-          </div>
-        </motion.div>
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.3, delay: 1.4 }}
+  className="relative z-10 mt-16 rounded-3xl border border-border bg-muted/50 p-4 shadow-md"
+>
+  <div className="w-full overflow-hidden rounded-xl border border-border">
+    <video
+      src="/herovideo.mp4"
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="h-auto w-full rounded-xl object-contain" 
+    />
+  </div>
+</motion.div>
+
       </div>
     </section>
   );
