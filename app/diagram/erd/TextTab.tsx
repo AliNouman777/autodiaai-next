@@ -326,7 +326,7 @@ function ExportPanel({
         <StatefulButton
           label="Save as PNG"
           onAction={exportPNG}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 rounded-md font-medium"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg rounded-md font-medium"
         />
       </div>
 
