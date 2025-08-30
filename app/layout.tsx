@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     "diagram editor",
     "ERD online",
     "generate ERD from text",
+    "Autodia"
   ],
   alternates: { canonical: "/" },
   robots: {
