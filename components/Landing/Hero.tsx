@@ -21,7 +21,10 @@ export default function Hero() {
       <div className="py-10 md:py-20">
         {/* Animated headline */}
         <h1 className="relative z-10 mx-auto max-w-4xl text-center text-3xl font-bold text-foreground md:text-5xl lg:text-6xl">
-          {"AI ERD Generator — Create Database Diagrams from Text"
+          <span className="text-3xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            AI ERD Generator
+          </span>
+          {"— Create Database Diagrams from Text"
             .split(" ")
             .map((word, index) => (
               <motion.span
@@ -84,7 +87,9 @@ export default function Hero() {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-chart-1"></span>
-            <span>No login required — guest users can create up to 4 diagrams</span>
+            <span>
+              No login required — guest users can create up to 4 diagrams
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-chart-3"></span>
@@ -98,23 +103,22 @@ export default function Hero() {
 
         {/* Hero preview video */}
         <motion.div
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.3, delay: 1.4 }}
-  className="relative z-10 mt-16 rounded-3xl border border-border bg-muted/50 p-4 shadow-md"
->
-  <div className="w-full overflow-hidden rounded-xl border border-border">
-    <video
-      src="/herovideo.mp4"
-      autoPlay
-      loop
-      muted
-      playsInline
-      className="h-auto w-full rounded-xl object-contain" 
-    />
-  </div>
-</motion.div>
-
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 1.4 }}
+          className="relative z-10 mt-16 rounded-3xl border border-border bg-muted/50 p-4 shadow-md"
+        >
+          <div className="w-full overflow-hidden rounded-xl border border-border">
+            <video
+              src="/herovideo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="h-auto w-full rounded-xl object-contain"
+            />
+          </div>
+        </motion.div>
       </div>
     </section>
   );
