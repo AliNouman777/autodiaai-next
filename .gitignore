@@ -66,6 +66,7 @@ prisma/generated/
 public/uploads/
 # data/
 uploads/
+BaseUrl.ts
 
 # Ignore coverage for Jest (if using testing)
 jest-html-reporters-*.html
