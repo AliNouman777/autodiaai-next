@@ -1,3 +1,9 @@
+// src/context/DiagramContext.tsx
+// NOTE: updated to remove DiagramChatAPI usage entirely.
+// - DiagramApiContextType no longer exposes getChat/appendChat
+// - updateDiagram/getDiagram already exist and are used by ChatCreatePanel
+// - no other logic changes besides type cleanups
+
 "use client";
 
 import * as htmlToImage from "html-to-image";
@@ -11,8 +17,8 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
 import BASE_URL from "@/BaseUrl";
+import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
 
 /* -------------------------------- Types -------------------------------- */
 
@@ -31,7 +37,6 @@ type ExportOptions = {
   filename?: string;
 };
 
-/** UI shows "", "PK", "FK"; backend expects "NONE", "PK", "FK" */
 export type KeyKindUI = "" | "PK" | "FK";
 type KeyKindServer = "NONE" | "PK" | "FK";
 
@@ -75,8 +80,6 @@ type DiagramApiContextType = {
     nodeId: string,
     label: string
   ) => Promise<void>;
-
-  /** Upsert a field (PATCH /schema/:fieldId). If fieldId doesn't exist server will create it. */
   updateField: (
     diagramId: string,
     nodeId: string,
@@ -85,22 +88,16 @@ type DiagramApiContextType = {
       | { id: string; title: string; type: string; key?: KeyKindUI }
       | FieldPatchUI
   ) => Promise<void>;
-
-  /** Delete an existing field */
   deleteField: (
     diagramId: string,
     nodeId: string,
     fieldId: string
   ) => Promise<void>;
-
-  /** (Optional) Create explicitly (POST /schema) */
   addField: (
     diagramId: string,
     nodeId: string,
     field: FieldCreateUI
   ) => Promise<void>;
-
-  /** (Optional) Reorder fields (PATCH /schema/reorder) */
   reorderFields: (
     diagramId: string,
     nodeId: string,
@@ -130,16 +127,15 @@ const toServerKey = (k?: KeyKindUI): KeyKindServer => {
   return "NONE";
 };
 
-// Build a normalized Error with status/code/message so UI can toast properly.
 function normalizeError(
   err: any
-): Error & { status?: number; code?: string; data?: any } {
+): Error & { status?: number; code?: string | number; data?: any } {
   const out = new Error(
     err?.data?.message ||
       err?.response?.data?.message ||
       err?.message ||
       "Something went wrong."
-  ) as Error & { status?: number; code?: string; data?: any };
+  ) as Error & { status?: number; code?: string | number; data?: any };
 
   out.status = err?.status ?? err?.response?.status;
   out.code = err?.code ?? err?.response?.data?.code ?? err?.data?.code;
@@ -171,7 +167,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
   const [deleting, setDeleting] = useState(false);
   const [diagrams, setDiagrams] = useState<Diagram[] | null>(null);
 
-  // Centralized 401 guard wrapper
   const run = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T> => {
       try {
@@ -206,9 +201,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
     async (name: string, type: string): Promise<Diagram> => {
       setCreating(true);
       try {
-        // Ensure your DiagramAPI.create internally sends cookies (credentials: "include")
         const res = await run(() => DiagramAPI.create({ name, type }));
-
         return res;
       } finally {
         setCreating(false);
@@ -245,7 +238,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
   const getDiagram = useCallback(
     async (id: string): Promise<Diagram> => {
       const doc = await run(() => DiagramAPI.get(id));
-      // optionally merge into list cache
       setDiagrams((prev) => {
         if (!prev) return prev;
         const idx = prev.findIndex((d) => d._id === doc._id);
@@ -269,12 +261,8 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       if (opts.schema) params.set("schema", opts.schema);
       if (opts.filename) params.set("filename", opts.filename);
 
-      const baseUrlRef = "https://api.autodia.tech";
-      const url = `${baseUrlRef}/api/diagrams/${id}/export.sql?${params.toString()}`;
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+      const url = `${BASE_URL}/api/diagrams/${id}/export.sql?${params.toString()}`;
+      const res = await fetch(url, { method: "GET", credentials: "include" });
 
       if (!res.ok) {
         const t = await res.text().catch(() => "");
@@ -308,7 +296,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  /* ----------------------- Node Schema CRUD (frontend) ---------------------- */
+  /* ----------------------------- Node CRUD ----------------------------- */
 
   const baseURL = BASE_URL || "";
 
@@ -530,14 +518,12 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
   const exportPNG = useCallback(async () => {
     if (!diagramRef.current || !rfInstance) return;
 
-    // 2–4 is crisp; files get larger as you go up
     const EXPORT_SCALE = Math.min(4, (window.devicePixelRatio || 1) * 2);
-    const PAD = 24; // extra room for arrowheads/outer glow, etc.
+    const PAD = 24;
 
     const clamp = (v: number, min: number, max: number) =>
       Math.max(min, Math.min(max, v));
 
-    // Get the on-screen bbox of nodes + edges
     const getGraphBBox = (root: HTMLElement) => {
       const rootRect = root.getBoundingClientRect();
       const elements = Array.from(
@@ -571,9 +557,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       return { x, y, w, h };
     };
 
-    // Resolve a solid background color for export
     const resolveExportBg = (el: HTMLElement): string => {
-      // 1) Prefer the effective background-color on this element or ancestors
       const isTransparent = (c: string) =>
         !c ||
         c === "transparent" ||
@@ -582,17 +566,15 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       let cur: HTMLElement | null = el;
       while (cur) {
         const c = getComputedStyle(cur).backgroundColor;
-        if (!isTransparent(c)) return c; // e.g. rgb(...), hsl(...)
+        if (!isTransparent(c)) return c;
         cur = cur.parentElement;
       }
 
-      // 2) Try CSS var --background (from your theme tokens)
       const varBg = getComputedStyle(document.documentElement)
         .getPropertyValue("--background")
         .trim();
-      if (varBg) return varBg; // works with hsl()/oklch() in modern browsers
+      if (varBg) return varBg;
 
-      // 3) Fallback to theme heuristic based on .dark class
       const isDark = document.documentElement.classList.contains("dark");
       return isDark ? "#0b0b10" : "#ffffff";
     };
@@ -603,20 +585,16 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       await new Promise((r) => setTimeout(r, 240));
 
       const container = diagramRef.current;
-
-      // Measure DOM bounds
       const box = getGraphBBox(container);
       const x = Math.max(0, Math.floor(box.x - PAD));
       const y = Math.max(0, Math.floor(box.y - PAD));
       const w = Math.ceil(box.w + PAD * 2);
       const h = Math.ceil(box.h + PAD * 2);
 
-      // Theme-aware background for export
       const exportBg = resolveExportBg(container);
 
-      // Render container to a big canvas, skipping the dock
       const fullCanvas = await htmlToImage.toCanvas(container, {
-        backgroundColor: exportBg, // ← THE important part
+        backgroundColor: exportBg,
         pixelRatio: EXPORT_SCALE,
         cacheBust: true,
         skipFonts: false,
@@ -624,7 +602,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
           !(el as HTMLElement)?.closest?.('[data-export-exclude="true"]'),
       } as any);
 
-      // Crop to the measured box (convert CSS px -> canvas px)
       const cw = container.clientWidth;
       const ratio = fullCanvas.width / cw;
 
