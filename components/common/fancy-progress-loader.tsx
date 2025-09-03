@@ -151,7 +151,11 @@ export function FancyProgressLoader({
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="rounded-xl border border-border bg-card shadow-sm p-3 animate-pulse"
+                className={clsx(
+                  "rounded-xl border border-border bg-card shadow-sm p-3 animate-pulse",
+                  // Hide cards after the first two on screens <= 646px
+                  i > 1 && "max-[646px]:hidden"
+                )}
               >
                 <div className="h-4 w-28 bg-muted rounded mb-3" />
                 <div className="space-y-2">
@@ -164,7 +168,7 @@ export function FancyProgressLoader({
             ))}
           </div>
         )}
-
+        
         <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 blur-2xl" />
 
         {children}

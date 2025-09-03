@@ -5,6 +5,9 @@ import "@/src/styles/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/src/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import Script from "next/script";
+
+const AHREFS_KEY = "Omxnkw4vK8vRC7JSC8/Wlw";
 
 // app/layout.tsx
 export const metadata: Metadata = {
@@ -25,7 +28,7 @@ export const metadata: Metadata = {
     "diagram editor",
     "ERD online",
     "generate ERD from text",
-    "Autodia"
+    "Autodia",
   ],
   alternates: { canonical: "/" },
   robots: {
@@ -63,8 +66,16 @@ export const metadata: Metadata = {
       { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+      {
+        url: "/android-chrome-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/android-chrome-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
       { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.png", sizes: "any", type: "image/png" },
     ],
@@ -90,6 +101,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased">
+        {
+          <Script
+            id="ahrefs-analytics"
+            src="https://analytics.ahrefs.com/analytics.js"
+            data-key={AHREFS_KEY}
+            strategy="beforeInteractive"
+          />
+        }
+
         <ThemeProvider>
           <AuthProvider>
             <main>
