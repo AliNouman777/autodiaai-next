@@ -1,9 +1,4 @@
 // src/context/DiagramContext.tsx
-// NOTE: updated to remove DiagramChatAPI usage entirely.
-// - DiagramApiContextType no longer exposes getChat/appendChat
-// - updateDiagram/getDiagram already exist and are used by ChatCreatePanel
-// - no other logic changes besides type cleanups
-
 "use client";
 
 import * as htmlToImage from "html-to-image";
@@ -98,11 +93,8 @@ type DiagramApiContextType = {
     nodeId: string,
     field: FieldCreateUI
   ) => Promise<void>;
-  reorderFields: (
-    diagramId: string,
-    nodeId: string,
-    order: string[]
-  ) => Promise<void>;
+
+  // ⛔️ reorderFields removed from the API surface
 };
 
 /* ------------------------------- Helpers ------------------------------- */
@@ -436,37 +428,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
     [run, baseURL]
   );
 
-  const reorderFields = useCallback(
-    async (diagramId: string, nodeId: string, order: string[]) => {
-      setUpdating(true);
-      try {
-        await run(async () => {
-          const res = await fetch(
-            `${baseURL}/api/diagrams/${encodeURIComponent(
-              diagramId
-            )}/nodes/${encodeURIComponent(nodeId)}/schema/reorder`,
-            {
-              method: "PATCH",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ order }),
-            }
-          );
-          if (!res.ok) {
-            const t = await res.text().catch(() => "");
-            throw normalizeError({
-              status: res.status,
-              message: `reorderFields failed: ${res.status} ${t}`,
-            });
-          }
-        });
-      } finally {
-        setUpdating(false);
-      }
-    },
-    [run, baseURL]
-  );
-
   /* ----------------------------- Memoized values ---------------------------- */
 
   const apiValue = useMemo(
@@ -488,7 +449,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       updateField,
       deleteField,
       addField,
-      reorderFields,
+      // ⛔️ reorderFields removed
     }),
     [
       creating,
@@ -506,7 +467,6 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       updateField,
       deleteField,
       addField,
-      reorderFields,
     ]
   );
 

@@ -1,3 +1,4 @@
+// app/(wherever)/ChatCreatePanel.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,41 @@ const MODEL_OPTIONS = [
 ] as const;
 
 /* =======================
+   Built-in example prompts
+======================= */
+
+const DEFAULT_EXAMPLES: ExamplePrompt[] = [
+  {
+    title: "E-commerce (Core)",
+    description:
+      "Products, categories, customers, orders, order_items, payments.",
+    prompt:
+      "Create an ERD for an e-commerce store with Products, Categories, Customers, Orders, OrderItems, and Payments. Track inventory per product, allow products to belong to multiple categories, and store payment method and status.",
+  },
+  {
+    title: "Ride-sharing",
+    description:
+      "Users, drivers, rides, vehicles, payments, ratings (1-to-many).",
+    prompt:
+      "Build an ERD for a ride-sharing app with Users, Drivers, Vehicles, Rides, Payments, and Ratings. Drivers are Users; capture pickup/dropoff locations and ride status.",
+  },
+  {
+    title: "Learning Platform",
+    description:
+      "Courses, lessons, enrollments, instructors, quizzes, attempts.",
+    prompt:
+      "Make an ERD for an online learning platform with Users, Instructors, Courses, Lessons, Enrollments, Quizzes, and QuizAttempts. Track scores and completion.",
+  },
+  {
+    title: "Blog / CMS",
+    description:
+      "Posts, authors, tags, comments, many-to-many tagging, moderation.",
+    prompt:
+      "Design an ERD for a blog CMS with Authors, Posts, Tags (many-to-many), Comments, and ModerationStatus. Include published_at and slug for posts.",
+  },
+];
+
+/* =======================
    Types
 ======================= */
 
@@ -36,6 +72,7 @@ export type ChatCreatePanelProps = {
     description?: string,
     model?: CanonicalModel
   ) => Promise<void>;
+  /** Optional override; if not provided, DEFAULT_EXAMPLES are shown */
   examplePrompts?: ExamplePrompt[];
   initialChat?: ServerChatMessage[];
 };
@@ -82,7 +119,6 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
   );
 
   // Re-hydrate when new chat arrives from the server.
-  // Watch both length and the timestamp of the last message.
   const chatLen = initialChat?.length ?? 0;
   const lastTs = chatLen ? initialChat[chatLen - 1].ts : 0;
   useEffect(() => {
@@ -180,10 +216,26 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
 
   const busy = localBusy || isBusy;
 
+  const promptsToShow = examplePrompts?.length
+    ? examplePrompts
+    : DEFAULT_EXAMPLES;
+
+  /* =======================
+     Header layout classes
+     - When editing title: stack rows (title editor then full-width model select)
+     - Otherwise: title + right-aligned fixed-width select in one row
+  ======================== */
+  const headerClass = [
+    "p-3 border-b border-border sticky top-0 z-10 bg-card/80 backdrop-blur",
+    editingTitle
+      ? "flex flex-col gap-3"
+      : "flex items-center justify-between gap-3",
+  ].join(" ");
+
   return (
     <div className="w-full h-full rounded-2xl bg-card text-card-foreground border border-border flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 p-3 border-b border-border sticky top-0 z-10 bg-card/80 backdrop-blur">
+      <div className={headerClass}>
         {/* Title (editable) */}
         <div className="flex items-center gap-2 min-w-0">
           {!editingTitle ? (
@@ -198,12 +250,12 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
               {title.trim() || "Untitled Diagram"}
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2">
               <Input
                 autoFocus
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
-                className="text-lg font-semibold w-56"
+                className="text-lg font-semibold w-full md:w-80"
                 placeholder="Diagram title"
               />
               <Button
@@ -226,7 +278,7 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
         </div>
 
         {/* Model select */}
-        <div className="w-56">
+        <div className={editingTitle ? "w-full" : "w-56 flex-shrink-0"}>
           <AppSelect<CanonicalModel>
             value={model}
             onChange={setModel}
@@ -273,11 +325,14 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
 
       {/* Composer */}
       <div className="border-t border-border p-3 space-y-3">
-        {examplePrompts.length > 0 && (
+        {!!promptsToShow.length && (
           <ExamplePromptBox
-            prompts={examplePrompts}
+            prompts={promptsToShow}
             onPick={handlePickExample}
             className="mb-2"
+            title="Example Prompts to start"
+            defaultOpen={false}
+            closeOnPick={true}
           />
         )}
 
@@ -293,7 +348,7 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
           <Button
             onClick={() => handleSend()}
             disabled={busy || !input.trim()}
-            className="px-5 py-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground font-semibold disabled:opacity-60"
+            className="px-5 py-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground font-semibold disabled:opacity-60 cursor-pointer "
           >
             {busy ? (
               <span className="inline-flex items-center gap-2">

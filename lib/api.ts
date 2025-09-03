@@ -196,7 +196,6 @@ export const DiagramAPI = {
   get: (id: string): Promise<Diagram> => api(`/api/diagrams/${id}`),
 };
 
-// ❌ removed DiagramChatAPI entirely
 
 export const FeedbackAPI = {
   create: (body: FeedbackPayload): Promise<Feedback> =>
