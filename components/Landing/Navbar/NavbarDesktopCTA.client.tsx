@@ -1,7 +1,7 @@
 // components/Landing/NavbarDesktopCTA.client.tsx
 "use client";
 
-import { useState, MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import Button from "../../common/Button";
 import ButtonSkeleton from "../../skeleton/landing/ButtonSkeleton";

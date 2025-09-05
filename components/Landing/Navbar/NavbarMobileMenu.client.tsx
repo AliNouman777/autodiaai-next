@@ -1,7 +1,7 @@
 // components/Landing/NavbarMobileMenu.client.tsx
 "use client";
 
-import { createContext, useContext, useState, MouseEvent } from "react";
+import { createContext, useContext, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   MobileNavToggle,

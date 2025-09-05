@@ -7,7 +7,7 @@ import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 import { AppSelect } from "@/components/common/AppSelect";
 import { toast } from "react-hot-toast";
 import ExamplePromptBox, {
-  ExamplePrompt,
+  type ExamplePrompt,
 } from "@/components/common/ExamplePromptBox";
 import type { ServerChatMessage } from "@/lib/api";
 

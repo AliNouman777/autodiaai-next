@@ -1,6 +1,6 @@
 // src/components/ui/sticky-banner.tsx
 "use client";
-import React, { SVGProps, useRef, useState } from "react";
+import React, { type SVGProps, useRef, useState } from "react";
 import {
   motion,
   useMotionValueEvent,

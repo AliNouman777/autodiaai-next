@@ -46,7 +46,7 @@ import CustomERDNode from "@/components/diagramcanvas/CustomERDNode";
 import AdaptiveEdge from "@/components/diagramcanvas/AdaptiveEdge";
 import { useDiagram } from "@/src/context/DiagramContext";
 import { useParams, usePathname } from "next/navigation";
-import { HandleMap, Props, RankDir } from "@/types/flowdiagram";
+import type { HandleMap, Props, RankDir } from "@/types/flowdiagram";
 import { layoutWithDagre, getNodeSize } from "./dagreLayout";
 import { FloatingDock } from "@/components/ui/floating-dock";
 

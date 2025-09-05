@@ -1,4 +1,4 @@
-import { ExamplePrompt } from "@/components/common/ExamplePromptBox";
+import type { ExamplePrompt } from "@/components/common/ExamplePromptBox";
 
 /* ---------------- Example prompts (same style as Aside) ---------------- */
 export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
