@@ -21,8 +21,6 @@ const FuturePlan = dynamicImport(
   }
 );
 
-// "use client"
-
 const Pricing = dynamicImport(() => import("@/components/Landing/Pricing"), {
   loading: () => null,
 });

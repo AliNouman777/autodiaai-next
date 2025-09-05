@@ -4,36 +4,39 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+
+    // --- modern ESM + resolver (key fix) ---
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // --- TS/JS target & libs ---
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // --- nice-to-haves for ESM packages with exports fields ---
+    "resolvePackageJsonExports": true,
+    "verbatimModuleSyntax": true,
+    "types": ["node"],
+
+    // --- keep your existing prefs ---
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
     "noEmit": true,
     "incremental": true,
-    "module": "esnext",
     "esModuleInterop": true,
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+
+    "plugins": [{ "name": "next" }]
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "data/featuresData.js"  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "**/*.tsx",
+    "data/featuresData.js"
+  ],
+  "exclude": ["node_modules"]
 }

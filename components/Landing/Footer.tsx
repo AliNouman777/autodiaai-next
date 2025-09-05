@@ -100,7 +100,7 @@ export default function Footer() {
             />
             <FooterCol
               title="Resources"
-              links={[{ label: "Contact", href: "#" }]}
+              links={[{ label: "Contact", href: "#" }, {label: "Blogs" , href: "/blog"}]}
             />
             <FooterCol
               title="Company"
