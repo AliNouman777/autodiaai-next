@@ -165,7 +165,10 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
   };
 
   const handleSend = async (text?: string) => {
-    if (!onSubmit) return;
+    if (!onSubmit) {
+      return;
+    }
+
     const body = (text ?? input).trim();
     if (!body) {
       toast.error("Prompt cannot be empty");

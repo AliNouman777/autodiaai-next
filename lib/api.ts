@@ -14,7 +14,10 @@ export class ApiError extends Error {
   status?: number;
   code?: string | number;
   data?: any;
-  constructor(message: string, opts?: { status?: number; code?: string | number; data?: any }) {
+  constructor(
+    message: string,
+    opts?: { status?: number; code?: string | number; data?: any }
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = opts?.status;
@@ -25,6 +28,12 @@ export class ApiError extends Error {
 
 type ApiOptions = RequestInit & {
   onUnauthorized?: (info: { path: string; status: number }) => void;
+};
+
+type StreamingApiOptions = ApiOptions & {
+  onMessage?: (data: any) => void;
+  onError?: (error: Error) => void;
+  onComplete?: (finalData: any) => void;
 };
 
 function isFormData(body: unknown): body is FormData {
@@ -60,10 +69,12 @@ export async function api(path: string, options: ApiOptions = {}) {
   };
 
   const body = (fetchOptions as RequestInit).body;
-  const shouldSetJson = body !== undefined && typeof body === "string" && !isFormData(body);
+  const shouldSetJson =
+    body !== undefined && typeof body === "string" && !isFormData(body);
   if (shouldSetJson) {
     (init.headers as Record<string, string>)["Content-Type"] =
-      (init.headers as Record<string, string>)["Content-Type"] || "application/json";
+      (init.headers as Record<string, string>)["Content-Type"] ||
+      "application/json";
   }
   (init.headers as Record<string, string>)["Accept"] =
     (init.headers as Record<string, string>)["Accept"] || "application/json";
@@ -76,7 +87,10 @@ export async function api(path: string, options: ApiOptions = {}) {
   }
 
   const raw = await parseBodySafe(res);
-  const isEnvelope = raw && typeof raw === "object" && ("ok" in (raw as any) || "data" in (raw as any));
+  const isEnvelope =
+    raw &&
+    typeof raw === "object" &&
+    ("ok" in (raw as any) || "data" in (raw as any));
 
   const ok = isEnvelope ? (raw as any).ok !== false && res.ok : res.ok;
   if (!ok) {
@@ -97,6 +111,155 @@ export async function api(path: string, options: ApiOptions = {}) {
   }
 
   return isEnvelope ? (raw as any).data ?? raw : raw;
+}
+
+// Enhanced streaming API function for Server-Sent Events
+export async function streamingApi(
+  path: string,
+  options: StreamingApiOptions = {}
+) {
+  const { onUnauthorized, onMessage, onError, onComplete, ...fetchOptions } =
+    options;
+
+  const init: RequestInit = {
+    credentials: "include", // Include cookies for authentication (aid)
+    ...fetchOptions,
+    headers: {
+      ...(fetchOptions.headers || {}),
+      Accept: "text/event-stream",
+    },
+  };
+
+  const body = (fetchOptions as RequestInit).body;
+  const shouldSetJson =
+    body !== undefined && typeof body === "string" && !isFormData(body);
+  if (shouldSetJson) {
+    (init.headers as Record<string, string>)["Content-Type"] =
+      (init.headers as Record<string, string>)["Content-Type"] ||
+      "application/json";
+  }
+
+  let res: Response;
+  try {
+    const url = `${BASE_URL}${path}?stream=true`;
+    res = await fetch(url, init);
+  } catch (e: any) {
+    const error = new ApiError(e?.message || "Network error", {
+      status: undefined,
+    });
+    onError?.(error);
+    throw error;
+  }
+
+  if (!res.ok) {
+    let errorMessage = `Request failed: ${res.status}`;
+    try {
+      const errorText = await res.text();
+      if (errorText) {
+        errorMessage += ` - ${errorText}`;
+      }
+    } catch (e) {
+      // Ignore text parsing errors
+    }
+
+    const error = new ApiError(errorMessage, {
+      status: res.status,
+    });
+    onError?.(error);
+    throw error;
+  }
+
+  if (res.status === 401 && typeof window !== "undefined" && onUnauthorized) {
+    onUnauthorized({ path, status: res.status });
+  }
+
+  // Handle streaming response
+  const reader = res.body?.getReader();
+  if (!reader) {
+    throw new ApiError("No response body", { status: res.status });
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalData: any = null;
+  let isConnected = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (line.trim() === "") continue;
+
+        // Handle different event types
+        if (line.startsWith("event: ")) {
+          const eventType = line.slice(7).trim();
+          continue;
+        }
+
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          if (data === "[DONE]") {
+            onComplete?.(finalData);
+            return finalData;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+
+            // Mark as connected on first successful data
+            if (!isConnected) {
+              isConnected = true;
+            }
+
+            // Handle different event types
+            if (parsed.type) {
+              switch (parsed.type) {
+                case "start":
+                  break;
+                case "progress":
+                  break;
+                case "heartbeat":
+                  break;
+                case "partial":
+                  break;
+                case "complete":
+                  break;
+                case "error":
+                  onError?.(new Error(parsed.error || "Unknown error"));
+                  return finalData;
+                default:
+              }
+            }
+
+            // Always update finalData and call onMessage for diagram updates
+            finalData = parsed;
+            onMessage?.(parsed);
+          } catch (e) {
+            // Silently handle parse errors in production
+          }
+        } else if (line.startsWith("id: ")) {
+          // Handle event ID if needed
+          const eventId = line.slice(4).trim();
+        } else if (line.startsWith("retry: ")) {
+          // Handle retry interval if needed
+          const retryMs = parseInt(line.slice(7).trim(), 10);
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+    if (isConnected) {
+    }
+  }
+
+  onComplete?.(finalData);
+  return finalData;
 }
 
 /* ===========================
@@ -163,8 +326,12 @@ export type Feedback = {
 =========================== */
 
 export const AuthAPI = {
-  register: (body: { firstName: string; lastName: string; email: string; password: string }) =>
-    api("/api/register", { method: "POST", body: JSON.stringify(body) }),
+  register: (body: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }) => api("/api/register", { method: "POST", body: JSON.stringify(body) }),
 
   login: (body: { email: string; password: string }) =>
     api("/api/login", { method: "POST", body: JSON.stringify(body) }),
@@ -177,7 +344,13 @@ export const DiagramAPI = {
   list: (params?: {
     page?: number;
     limit?: number;
-  }): Promise<{ items: Diagram[]; page?: number; limit?: number; total?: number; pages?: number }> => {
+  }): Promise<{
+    items: Diagram[];
+    page?: number;
+    limit?: number;
+    total?: number;
+    pages?: number;
+  }> => {
     const q = new URLSearchParams();
     if (params?.page) q.set("page", String(params.page));
     if (params?.limit) q.set("limit", String(params.limit));
@@ -188,14 +361,34 @@ export const DiagramAPI = {
   create: (body: CreateDiagramBody): Promise<Diagram> =>
     api(`/api/diagrams`, { method: "POST", body: JSON.stringify(body) }),
 
+  // Regular update for non-generation requests (like title updates)
   update: (id: string, body: UpdateDiagramBody): Promise<Diagram> =>
-    api(`/api/diagrams/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    api(`/api/diagrams/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
 
-  delete: (id: string): Promise<{}> => api(`/api/diagrams/${id}`, { method: "DELETE" }),
+  // Streaming update for generation requests
+  updateStreaming: (
+    id: string,
+    body: UpdateDiagramBody,
+    options?: {
+      onMessage?: (data: Diagram) => void;
+      onError?: (error: Error) => void;
+      onComplete?: (finalData: Diagram) => void;
+    }
+  ): Promise<Diagram> =>
+    streamingApi(`/api/diagrams/${id}/stream`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      ...options,
+    }),
+
+  delete: (id: string): Promise<{}> =>
+    api(`/api/diagrams/${id}`, { method: "DELETE" }),
 
   get: (id: string): Promise<Diagram> => api(`/api/diagrams/${id}`),
 };
-
 
 export const FeedbackAPI = {
   create: (body: FeedbackPayload): Promise<Feedback> =>

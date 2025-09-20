@@ -11,6 +11,7 @@ import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 import toast from "react-hot-toast";
 import FancyProgressLoader from "@/components/common/fancy-progress-loader";
 import { StickyNotice } from "@/components/common/sticky-notice";
+import { useStreamingERD } from "@/src/hooks/useStreamingERD";
 
 const DiagramPageClient: React.FC = () => {
   const params = useParams<{ id: string }>();
@@ -20,14 +21,34 @@ const DiagramPageClient: React.FC = () => {
     getDiagram,
     fetching,
     updateDiagram: updateDiagramApi,
+    updateDiagramStreaming: updateDiagramStreamingApi,
   } = useDiagramApi();
 
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [streamingStatus, setStreamingStatus] = useState<{
+    isConnected: boolean;
+    progress?: string;
+    eventType?: string;
+  }>({
+    isConnected: false,
+  });
 
   const [showBanner, setShowBanner] = useState(false);
   const bannerTimer = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Streaming hook for seamless ERD generation
+  const {
+    isStreaming,
+    progress,
+    message,
+    error: streamingError,
+    connectionStatus,
+    startStreaming,
+    stopStreaming,
+  } = useStreamingERD();
 
   // guard against duplicate fetches in dev (StrictMode)
   const fetchedFor = useRef<string | null>(null);
@@ -68,36 +89,86 @@ const DiagramPageClient: React.FC = () => {
     };
   }, []);
 
+  // Cleanup streaming connection on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (bannerTimer.current) {
+        window.clearTimeout(bannerTimer.current);
+      }
+    };
+  }, []);
+
   // this handles title/prompt/model updates (patch) and rehydrates local state
   const handleUpdate = async (
     newTitle?: string,
     newPrompt?: string,
     model?: string
   ) => {
-    if (!diagramId) return;
+    if (!diagramId) {
+      return;
+    }
+
+    if (!diagram) {
+      toast.error("Diagram not loaded yet. Please wait and try again.");
+      return;
+    }
 
     const body: UpdateDiagramBody = {};
-    if (typeof newTitle === "string" && newTitle !== diagram?.title)
-      body.title = newTitle;
-    if (typeof newPrompt === "string" && newPrompt !== diagram?.prompt)
-      body.prompt = newPrompt;
-    if (typeof model === "string" && model !== (diagram as any)?.model)
-      body.model = model as any;
 
-    if (Object.keys(body).length === 0) return;
+    if (typeof newPrompt === "string" && newPrompt.trim()) {
+      body.prompt = newPrompt;
+    }
+    if (typeof model === "string") {
+      body.model = model as any;
+    }
+    if (typeof newTitle === "string" && newTitle !== diagram?.title) {
+      body.title = newTitle;
+    }
+
+    if (Object.keys(body).length === 0 && !newPrompt && !model) {
+      return;
+    }
 
     const needsGeneration = Boolean(body.prompt) || Boolean(body.model);
 
+    const prevNodes = diagram?.nodes?.length ?? 0;
+
     try {
-      if (needsGeneration) setGenerating(true);
+      if (needsGeneration) {
+        setGenerating(true);
+        setStreamingStatus({ isConnected: false });
 
-      const prevNodes = diagram?.nodes?.length ?? 0;
-      const updated = await updateDiagramApi(diagramId, body);
+        // Use the new streaming hook for seamless experience
 
-      // IMPORTANT: set the whole updated diagram so `chat` changes flow into TextTab
-      setDiagram(updated);
+        try {
+          const result = await startStreaming(
+            diagramId,
+            body.prompt!,
+            body.model || "gemini-2.5-flash",
+            (progressData) => {
+              // Handle real-time progress updates
+              // You can update UI here if needed
+            }
+          );
 
-      const nowNodes = updated?.nodes?.length ?? 0;
+          // Update diagram with the complete result
+          if (result) {
+            setDiagram(result);
+          } else {
+          }
+        } catch (streamingError: any) {
+          toast.error(`Generation failed: ${streamingError.message}`);
+          throw streamingError;
+        }
+      } else {
+        const updated = await updateDiagramApi(diagramId, body);
+        setDiagram(updated);
+      }
+
+      const nowNodes = diagram?.nodes?.length ?? 0;
       const firstGenKey = `firstGenSeen:${diagramId}`;
       const firstTimeGenerated =
         needsGeneration && prevNodes === 0 && nowNodes > 0;
@@ -124,10 +195,16 @@ const DiagramPageClient: React.FC = () => {
         data?.message ||
         e?.message ||
         "Update failed";
+
+      setStreamingStatus({ isConnected: false });
       toast.error(msg);
       throw e;
     } finally {
-      if (needsGeneration) setGenerating(false);
+      if (needsGeneration) {
+        setGenerating(false);
+        setStreamingStatus({ isConnected: false });
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -135,11 +212,24 @@ const DiagramPageClient: React.FC = () => {
 
   return (
     <div className="relative w-full">
+      {/* Error display for streaming */}
+      {streamingError && (
+        <div className="fixed top-20 right-4 z-50 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg shadow-lg max-w-md">
+          <div className="flex items-start gap-2">
+            <div className="text-destructive">❌</div>
+            <div>
+              <p className="font-medium">Streaming Error</p>
+              <p className="text-sm mt-1">{streamingError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* optional banner */}
       {showBanner && (
         <StickyNotice
           tone="primary"
-          message="🎉 Your diagram is ready! Please don’t forget to share your valuable feedback."
+          message="🎉 Your diagram is ready! Please don't forget to share your valuable feedback."
           ctaHref="/feedback"
           ctaLabel="Share feedback"
           hideOnScroll={false}
@@ -180,7 +270,15 @@ const DiagramPageClient: React.FC = () => {
 
           {generating && (
             <div className="absolute inset-0 z-40">
-              <FancyProgressLoader loading={true} withBackdrop />
+              <FancyProgressLoader
+                loading={true}
+                withBackdrop
+                progressText={message}
+                streamingProgress={progress}
+                connectionStatus={connectionStatus}
+                onCancel={stopStreaming}
+                isStreaming={isStreaming}
+              />
             </div>
           )}
         </section>

@@ -62,6 +62,15 @@ type DiagramApiContextType = {
     limit?: number;
   }) => Promise<Diagram[]>;
   updateDiagram: (id: string, body: UpdateDiagramBody) => Promise<Diagram>;
+  updateDiagramStreaming: (
+    id: string,
+    body: UpdateDiagramBody,
+    options?: {
+      onMessage?: (data: Diagram) => void;
+      onError?: (error: Error) => void;
+      onComplete?: (finalData: Diagram) => void;
+    }
+  ) => Promise<Diagram>;
   deleteDiagram: (id: string) => Promise<void>;
   getDiagram: (id: string) => Promise<Diagram>;
   exportSQL: (
@@ -207,6 +216,26 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       setUpdating(true);
       try {
         return await run(() => DiagramAPI.update(id, body));
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [run]
+  );
+
+  const updateDiagramStreaming = useCallback(
+    async (
+      id: string,
+      body: UpdateDiagramBody,
+      options?: {
+        onMessage?: (data: Diagram) => void;
+        onError?: (error: Error) => void;
+        onComplete?: (finalData: Diagram) => void;
+      }
+    ) => {
+      setUpdating(true);
+      try {
+        return await run(() => DiagramAPI.updateStreaming(id, body, options));
       } finally {
         setUpdating(false);
       }
@@ -440,6 +469,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       listDiagrams,
       createDiagram,
       updateDiagram,
+      updateDiagramStreaming,
       deleteDiagram,
       getDiagram,
       exportSQL,
@@ -460,6 +490,7 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       listDiagrams,
       createDiagram,
       updateDiagram,
+      updateDiagramStreaming,
       deleteDiagram,
       getDiagram,
       exportSQL,

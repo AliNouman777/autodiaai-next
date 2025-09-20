@@ -12,6 +12,12 @@ export type FancyProgressLoaderProps = {
   withBackdrop?: boolean;
   className?: string;
   children?: React.ReactNode;
+  // Streaming props
+  progressText?: string;
+  streamingProgress?: number;
+  connectionStatus?: "disconnected" | "connecting" | "connected";
+  onCancel?: () => void;
+  isStreaming?: boolean;
 };
 
 export function FancyProgressLoader({
@@ -23,6 +29,12 @@ export function FancyProgressLoader({
   withBackdrop = false,
   className,
   children,
+  // Streaming props
+  progressText,
+  streamingProgress,
+  connectionStatus,
+  onCancel,
+  isStreaming,
 }: FancyProgressLoaderProps) {
   const defaultPhases = useMemo(
     () => [
@@ -98,6 +110,40 @@ export function FancyProgressLoader({
 
   const pct = Math.round(Math.min(100, Math.max(0, progress)));
 
+  // Determine which progress and text to use
+  const displayProgress =
+    isStreaming && streamingProgress !== undefined ? streamingProgress : pct;
+  const displayText = isStreaming && progressText ? progressText : phaseLabel;
+
+  // Connection status indicator
+  const getConnectionStatusColor = () => {
+    if (!isStreaming) return "bg-gray-400";
+    switch (connectionStatus) {
+      case "connecting":
+        return "bg-yellow-500";
+      case "connected":
+        return "bg-green-500";
+      case "disconnected":
+        return "bg-orange-500"; // Orange for cancelled
+      default:
+        return "bg-gray-400";
+    }
+  };
+
+  const getConnectionStatusText = () => {
+    if (!isStreaming) return "Ready";
+    switch (connectionStatus) {
+      case "connecting":
+        return "Connecting...";
+      case "connected":
+        return "Generating ERD...";
+      case "disconnected":
+        return "Cancelled";
+      default:
+        return "Ready";
+    }
+  };
+
   return (
     <div
       className={clsx(
@@ -110,11 +156,35 @@ export function FancyProgressLoader({
       <div className="relative w-[min(760px,94%)] rounded-2xl border border-border bg-card/80 backdrop-blur-md shadow-[0_10px_30px_rgba(2,6,23,0.08)] p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium text-foreground">
-            {phaseLabel}
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-medium text-foreground">
+              {displayText}
+            </div>
+            {isStreaming && (
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${getConnectionStatusColor()} ${
+                    isStreaming ? "animate-pulse" : ""
+                  }`}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {getConnectionStatusText()}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="text-sm tabular-nums font-semibold text-foreground">
-            {pct}%
+          <div className="flex items-center gap-3">
+            <div className="text-sm tabular-nums font-semibold text-foreground">
+              {displayProgress}%
+            </div>
+            {isStreaming && onCancel && (
+              <button
+                onClick={onCancel}
+                className="px-3 py-1 text-xs bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
 
@@ -122,28 +192,32 @@ export function FancyProgressLoader({
         <div
           className="relative h-3 w-full rounded-full bg-muted overflow-hidden"
           role="progressbar"
-          aria-valuenow={pct}
+          aria-valuenow={displayProgress}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label="Generation progress"
         >
           <div
             className="h-full rounded-full bg-primary transition-[width] duration-200 will-change-[width]"
-            style={{ width: `${pct}%` }}
+            style={{ width: `${displayProgress}%` }}
           />
           <div
             className="absolute inset-y-0 left-0 pointer-events-none opacity-70 dark:opacity-40"
             style={{
-              width: `${pct}%`,
+              width: `${displayProgress}%`,
               background:
                 "repeating-linear-gradient(45deg, rgba(255,255,255,0.6) 0 8px, rgba(255,255,255,0.15) 8px 16px)",
-              animation: "stripeMove 1.2s linear infinite",
+              animation: isStreaming
+                ? "stripeMove 1.2s linear infinite"
+                : "none",
             }}
           />
         </div>
 
         <p className="mt-2 text-xs text-muted-foreground">
-          Preparing your ERD (nodes, relations, layout).
+          {isStreaming
+            ? "Real-time AI generation in progress..."
+            : "Preparing your ERD (nodes, relations, layout)."}
         </p>
 
         {showSkeleton && (
@@ -168,7 +242,7 @@ export function FancyProgressLoader({
             ))}
           </div>
         )}
-        
+
         <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 blur-2xl" />
 
         {children}
