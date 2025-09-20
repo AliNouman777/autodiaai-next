@@ -206,7 +206,7 @@ export async function streamingApi(
           const data = line.slice(6);
           if (data === "[DONE]") {
             onComplete?.(finalData);
-            return finalData;
+            return finalData; 
           }
 
           try {
