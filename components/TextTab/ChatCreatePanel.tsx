@@ -1,5 +1,6 @@
 // app/(wherever)/ChatCreatePanel.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+// Rationale: Remove unnecessary React import as JSX transform handles it
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,8 +147,9 @@ const ChatCreatePanel: React.FC<ChatCreatePanelProps> = ({
       setTitle(nextTitle);
       setEditingTitle(false);
       toast.success("Title updated");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to rename");
+    } catch (e: unknown) {
+      const error = e as { message?: string };
+      toast.error(error?.message || "Failed to rename");
     } finally {
       setLocalBusy(false);
     }

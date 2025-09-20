@@ -2,7 +2,8 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import React, { useMemo, useRef } from "react";
+// Rationale: Import React hooks directly since we removed the React import
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 export const CanvasRevealEffect = ({
@@ -68,7 +69,7 @@ const DotMatrix: React.FC<DotMatrixProps> = ({
   shader = "",
   center = ["x", "y"],
 }) => {
-  const uniforms = React.useMemo(() => {
+  const uniforms = useMemo(() => {
     let colorsArray = [
       colors[0],
       colors[0],
@@ -182,28 +183,29 @@ const ShaderMaterial = ({
   });
 
   const getUniforms = () => {
-    const prepared: any = {};
+    // Rationale: Improve type safety by replacing 'any' with proper types
+    const prepared: Record<string, { value: unknown; type: string }> = {};
     for (const name in uniforms) {
-      const u: any = uniforms[name];
+      const u = uniforms[name] as { value?: unknown; type?: string };
       if (u.type === "uniform1f")
         prepared[name] = { value: u.value, type: "1f" };
       if (u.type === "uniform3f")
         prepared[name] = {
-          value: new THREE.Vector3().fromArray(u.value),
+          value: new THREE.Vector3().fromArray(u.value as number[]),
           type: "3f",
         };
       if (u.type === "uniform1fv")
         prepared[name] = { value: u.value, type: "1fv" };
       if (u.type === "uniform3fv")
         prepared[name] = {
-          value: (u.value as number[][]).map((v) =>
+          value: (u.value as unknown as number[][]).map((v) =>
             new THREE.Vector3().fromArray(v)
           ),
           type: "3fv",
         };
       if (u.type === "uniform2f")
         prepared[name] = {
-          value: new THREE.Vector2().fromArray(u.value),
+          value: new THREE.Vector2().fromArray(u.value as number[]),
           type: "2f",
         };
     }
@@ -216,6 +218,7 @@ const ShaderMaterial = ({
     prepared["u_time"] = { value: 0, type: "1f" };
     prepared["u_resolution"] = {
       value: new THREE.Vector2(size.width * dpr, size.height * dpr),
+      type: "2f",
     };
     return prepared;
   };

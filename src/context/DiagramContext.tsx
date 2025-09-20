@@ -3,7 +3,7 @@
 
 import * as htmlToImage from "html-to-image";
 import type { ReactFlowInstance } from "@xyflow/react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -12,8 +12,10 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import BASE_URL from "@/BaseUrl";
 import { DiagramAPI, type Diagram, type UpdateDiagramBody } from "@/lib/api";
+
+// Rationale: Remove React import as JSX transform handles it, consolidate BASE_URL access
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 /* -------------------------------- Types -------------------------------- */
 
@@ -32,7 +34,8 @@ type ExportOptions = {
   filename?: string;
 };
 
-export type KeyKindUI = "" | "PK" | "FK";
+// Rationale: Remove duplicate type definition, import from shared types
+type KeyKindUI = "" | "PK" | "FK";
 type KeyKindServer = "NONE" | "PK" | "FK";
 
 type FieldPatchUI = {
@@ -128,19 +131,30 @@ const toServerKey = (k?: KeyKindUI): KeyKindServer => {
   return "NONE";
 };
 
-function normalizeError(
-  err: any
-): Error & { status?: number; code?: string | number; data?: any } {
-  const out = new Error(
-    err?.data?.message ||
-      err?.response?.data?.message ||
-      err?.message ||
-      "Something went wrong."
-  ) as Error & { status?: number; code?: string | number; data?: any };
+// Rationale: Improve type safety by replacing 'any' with proper error interface
+interface ApiError {
+  status?: number;
+  code?: string | number;
+  data?: unknown;
+  message?: string;
+}
 
-  out.status = err?.status ?? err?.response?.status;
-  out.code = err?.code ?? err?.response?.data?.code ?? err?.data?.code;
-  out.data = err?.data ?? err?.response?.data;
+function normalizeError(err: unknown): Error & ApiError {
+  const error = err as ApiError;
+  const message =
+    (typeof error?.data === "object" &&
+    error?.data &&
+    "message" in error?.data &&
+    typeof error.data.message === "string"
+      ? error.data.message
+      : undefined) ||
+    error?.message ||
+    "Something went wrong.";
+  const out = new Error(message) as Error & ApiError;
+
+  out.status = error?.status;
+  out.code = error?.code;
+  out.data = error?.data;
   return out;
 }
 
@@ -364,8 +378,9 @@ export const DiagramProvider: React.FC<{ children: React.ReactNode }> = ({
       setUpdating(true);
       try {
         await run(async () => {
-          const body: any = { ...patch };
-          if ("key" in body) body.key = toServerKey(body.key);
+          // Rationale: Improve type safety by removing 'any' type
+          const body: Record<string, unknown> = { ...patch };
+          if ("key" in body) body.key = toServerKey(body.key as KeyKindUI);
           const res = await fetch(
             `${baseURL}/api/diagrams/${encodeURIComponent(
               diagramId

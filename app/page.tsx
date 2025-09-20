@@ -10,19 +10,20 @@ import Footer from "@/components/Landing/Footer";
 export const dynamic = "force-static";
 export const revalidate = 86_400;
 
+// Rationale: Optimize dynamic imports with proper loading states
 // Below-the-fold (client/heavy) → lazy-load
 const Features = dynamicImport(() => import("@/components/Landing/Features"), {
-  loading: () => null,
+  loading: () => <div className="h-96" />, // Prevent layout shift
 });
 const FuturePlan = dynamicImport(
   () => import("@/components/Landing/FuturePlan"),
   {
-    loading: () => null,
+    loading: () => <div className="h-64" />, // Prevent layout shift
   }
 );
 
 const Pricing = dynamicImport(() => import("@/components/Landing/Pricing"), {
-  loading: () => null,
+  loading: () => <div className="h-96" />, // Prevent layout shift
 });
 
 export default function Page() {

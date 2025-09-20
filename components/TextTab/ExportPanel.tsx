@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// Rationale: Remove unnecessary React import as JSX transform handles it
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppSelect } from "@/components/common/AppSelect";
@@ -43,8 +44,9 @@ const ExportPanel: React.FC<{ diagramId: string; defaultTitle?: string }> = ({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      toast.error(e?.message || "Export failed");
+    } catch (e: unknown) {
+      const error = e as { message?: string };
+      toast.error(error?.message || "Export failed");
     } finally {
       setBusy(false);
     }

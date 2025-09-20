@@ -14,6 +14,7 @@ import {
   Background,
   ReactFlow,
   type Edge,
+  type EdgeMarkerType,
   type Node,
   type OnConnect,
   type OnEdgesChange,
@@ -66,8 +67,14 @@ function buildHandleMap(nodes: Node[]): HandleMap {
     let defaultLeft: string | null = null;
     let defaultRight: string | null = null;
 
-    const schema: any[] =
-      (n as any)?.data?.schema ?? (n as any)?.data?.fields ?? [];
+    // Rationale: Improve type safety by replacing 'any' with proper interface
+    const schema: Array<{
+      id?: string;
+      fieldId?: string;
+      title: string;
+      type: string;
+      key?: string;
+    }> = (n as any)?.data?.schema ?? (n as any)?.data?.fields ?? [];
 
     if (Array.isArray(schema)) {
       for (const f of schema) {
@@ -100,7 +107,12 @@ function buildHandleMap(nodes: Node[]): HandleMap {
 }
 
 /* Deterministic fallback id (avoids SSR/CSR mismatches) */
-function stableEdgeId(e: any) {
+function stableEdgeId(e: {
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}) {
   const s = String(e?.source ?? "");
   const t = String(e?.target ?? "");
   const sh = String(e?.sourceHandle ?? "");
@@ -108,7 +120,16 @@ function stableEdgeId(e: any) {
   return `e:${s}|${sh}=>${t}|${th}`;
 }
 
-function coerceEdge(e: any): Edge {
+function coerceEdge(e: {
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+  id?: string;
+  markerStart?: EdgeMarkerType;
+  markerEnd?: EdgeMarkerType;
+  data?: unknown;
+}): Edge {
   const id = typeof e?.id === "string" && e.id ? e.id : stableEdgeId(e);
   return {
     id,
@@ -123,7 +144,19 @@ function coerceEdge(e: any): Edge {
   } as Edge;
 }
 
-function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
+function sanitizeEdges(
+  rawEdges: Array<{
+    source: string;
+    target: string;
+    sourceHandle?: string;
+    targetHandle?: string;
+    id?: string;
+    markerStart?: EdgeMarkerType;
+    markerEnd?: EdgeMarkerType;
+    data?: unknown;
+  }>,
+  nodes: Node[]
+) {
   const map = buildHandleMap(nodes);
   const fixed: Edge[] = [];
 
@@ -154,7 +187,11 @@ function sanitizeEdges(rawEdges: any[], nodes: Node[]) {
 }
 
 /* -------------------- Small helpers -------------------- */
-function getNodeCenter(node: any): [number, number] {
+function getNodeCenter(node: {
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+}): [number, number] {
   const width = (node.width as number) ?? 240;
   const height = (node.height as number) ?? 120;
   return [node.position.x + width / 2, node.position.y + height / 2];

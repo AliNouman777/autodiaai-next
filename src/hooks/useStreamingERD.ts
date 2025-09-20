@@ -1,5 +1,7 @@
+// Rationale: Consolidate BASE_URL access pattern
 import { useState, useCallback, useRef } from "react";
-import BASE_URL from "@/BaseUrl";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 interface StreamingState {
   isStreaming: boolean;
@@ -25,7 +27,7 @@ export const useStreamingERD = () => {
       diagramId: string,
       prompt: string,
       model: string = "gemini-2.5-flash",
-      onProgress?: (data: any) => void
+      onProgress?: (data: unknown) => void
     ) => {
       // Cleanup previous connection
       if (abortControllerRef.current) {
@@ -132,8 +134,9 @@ export const useStreamingERD = () => {
             }
           }
         }
-      } catch (error: any) {
-        if (error.name === "AbortError") {
+      } catch (error: unknown) {
+        const err = error as { message?: string; name?: string };
+        if (err.name === "AbortError") {
           setState((prev) => ({
             ...prev,
             isStreaming: false,
@@ -146,7 +149,7 @@ export const useStreamingERD = () => {
           setState((prev) => ({
             ...prev,
             isStreaming: false,
-            error: error.message,
+            error: err.message || "Unknown error",
             connectionStatus: "disconnected",
           }));
           throw error;

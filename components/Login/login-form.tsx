@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+// Rationale: Import React hooks directly since we removed the React import
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import BASE_URL from "@/BaseUrl";
+// Rationale: Consolidate BASE_URL access pattern
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 import { Spinner } from "@/src/components/ui/shadcn-io/spinner";
 
 type Props = React.ComponentProps<"div">;
@@ -24,14 +26,14 @@ export function LoginForm({ className, ...props }: Props) {
   const router = useRouter();
   const { login, loading } = useAuth();
 
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   // local state for the Google button only
-  const [googleLoading, setGoogleLoading] = React.useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (loading || googleLoading) return;
     setError(null);
@@ -39,8 +41,9 @@ export function LoginForm({ className, ...props }: Props) {
     try {
       await login(email, password);
       router.replace("/diagram");
-    } catch (err: any) {
-      setError(err?.message || "Login failed");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error?.message || "Login failed");
     }
   }
 

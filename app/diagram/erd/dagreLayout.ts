@@ -8,8 +8,19 @@ export const DEFAULT_NODE_W = 260;
 export const DEFAULT_NODE_H = 120;
 
 /** Rough fallback when a node hasn't measured itself yet. */
-export function estimateERDSize(n: any) {
-  const rows = Array.isArray(n?.data?.schema) ? n.data.schema.length : 0;
+// Rationale: Improve type safety by replacing 'any' with proper interface
+export function estimateERDSize(n: {
+  data?: {
+    schema?: Array<{ title: string; type: string }>;
+    label?: string;
+  };
+  schema?: Array<{ title: string; type: string }>;
+}) {
+  const rows = Array.isArray(n?.data?.schema)
+    ? n.data.schema.length
+    : Array.isArray(n?.schema)
+    ? n.schema.length
+    : 0;
   const header = 36; // label bar
   const rowH = 24; // per-field row
   const padding = 12;
@@ -24,7 +35,17 @@ export function estimateERDSize(n: any) {
 }
 
 /** Read actual node width/height when available; otherwise estimate. */
-export function getNodeSize(n: any) {
+// Rationale: Improve type safety by replacing 'any' with proper interface
+export function getNodeSize(n: {
+  data?: {
+    schema?: Array<{ title: string; type: string }>;
+    label?: string;
+  };
+  schema?: Array<{ title: string; type: string }>;
+  width?: number;
+  height?: number;
+  style?: { width?: number; height?: number };
+}) {
   const width =
     n.width ??
     (typeof n?.style?.width === "number" ? n.style.width : undefined);

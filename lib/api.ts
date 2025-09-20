@@ -4,19 +4,24 @@
 // - add `chatDelta?: ServerChatMessage[]` to UpdateDiagramBody
 // - remove DiagramChatAPI entirely
 
-import BASE_URL from "@/BaseUrl";
+// Rationale: Consolidate BASE_URL access pattern
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+// Import React Flow types for Diagram
+import type { Node, Edge } from "@xyflow/react";
 
 /* ===========================
    Error & helpers
 =========================== */
 
+// Rationale: Improve type safety by replacing 'any' with proper types
 export class ApiError extends Error {
   status?: number;
   code?: string | number;
-  data?: any;
+  data?: unknown;
   constructor(
     message: string,
-    opts?: { status?: number; code?: string | number; data?: any }
+    opts?: { status?: number; code?: string | number; data?: unknown }
   ) {
     super(message);
     this.name = "ApiError";
@@ -30,10 +35,11 @@ type ApiOptions = RequestInit & {
   onUnauthorized?: (info: { path: string; status: number }) => void;
 };
 
+// Rationale: Improve type safety for streaming API options
 type StreamingApiOptions = ApiOptions & {
-  onMessage?: (data: any) => void;
+  onMessage?: (data: unknown) => void;
   onError?: (error: Error) => void;
-  onComplete?: (finalData: any) => void;
+  onComplete?: (finalData: unknown) => void;
 };
 
 function isFormData(body: unknown): body is FormData {
@@ -82,8 +88,11 @@ export async function api(path: string, options: ApiOptions = {}) {
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, init);
-  } catch (e: any) {
-    throw new ApiError(e?.message || "Network error", { status: undefined });
+  } catch (e: unknown) {
+    const error = e as { message?: string };
+    throw new ApiError(error?.message || "Network error", {
+      status: undefined,
+    });
   }
 
   const raw = await parseBodySafe(res);
@@ -143,8 +152,9 @@ export async function streamingApi(
   try {
     const url = `${BASE_URL}${path}?stream=true`;
     res = await fetch(url, init);
-  } catch (e: any) {
-    const error = new ApiError(e?.message || "Network error", {
+  } catch (e: unknown) {
+    const errorObj = e as { message?: string };
+    const error = new ApiError(errorObj?.message || "Network error", {
       status: undefined,
     });
     onError?.(error);
@@ -181,7 +191,7 @@ export async function streamingApi(
 
   const decoder = new TextDecoder();
   let buffer = "";
-  let finalData: any = null;
+  let finalData: unknown = null;
   let isConnected = false;
 
   try {
@@ -206,7 +216,7 @@ export async function streamingApi(
           const data = line.slice(6);
           if (data === "[DONE]") {
             onComplete?.(finalData);
-            return finalData; 
+            return finalData;
           }
 
           try {
@@ -258,8 +268,8 @@ export async function streamingApi(
     }
   }
 
-  onComplete?.(finalData);
-  return finalData;
+  onComplete?.(finalData as Diagram);
+  return finalData as Diagram;
 }
 
 /* ===========================
@@ -286,8 +296,8 @@ export type Diagram = {
   type: string;
   prompt: string;
   model: Model;
-  nodes: any[];
-  edges: any[];
+  nodes: Node[];
+  edges: Edge[];
   chat?: ServerChatMessage[]; // 👈 now included with diagram
   createdAt: string;
   updatedAt: string;
@@ -303,8 +313,8 @@ export type UpdateDiagramBody = Partial<{
   name: string;
   type: string;
   title: string;
-  nodes: any[];
-  edges: any[];
+  nodes: unknown[];
+  edges: unknown[];
   prompt: string;
   model: Model;
   chatDelta: ServerChatMessage[]; // 👈 append-only messages
@@ -382,7 +392,7 @@ export const DiagramAPI = {
       method: "PATCH",
       body: JSON.stringify(body),
       ...options,
-    }),
+    }) as Promise<Diagram>,
 
   delete: (id: string): Promise<{}> =>
     api(`/api/diagrams/${id}`, { method: "DELETE" }),
