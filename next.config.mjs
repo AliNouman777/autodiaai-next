@@ -17,4 +17,13 @@ export default withMDX({
       { protocol: "https", hostname: "source.unsplash.com" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/$",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
 });
