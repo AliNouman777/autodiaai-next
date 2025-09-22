@@ -359,6 +359,8 @@ export default async function BlogPost({ params }: { params: Params }) {
           "prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5",
           "prose-pre:rounded-xl",
           "prose-h2:mt-14 prose-h2:mb-5 prose-h3:mt-10 prose-h3:mb-4 prose-h4:mt-7 prose-h4:mb-3",
+          // Ensure not-prose sections don't get prose styling
+          "[&_.not-prose]:!prose-none [&_.not-prose_*]:!prose-none",
         ].join(" ")}
       >
         <MDX

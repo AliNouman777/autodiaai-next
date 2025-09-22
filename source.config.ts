@@ -23,7 +23,7 @@ export const blog = defineDocs({
       tags: z.array(z.string()).optional(),
       featured: z.boolean().optional(),
       draft: z.boolean().optional(),
-      cover: urlOrPath.optional(), 
+      cover: urlOrPath.optional(),
       readTime: z.string().optional(),
     }),
   },
