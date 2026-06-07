@@ -41,6 +41,8 @@ const DiagramPageClient: React.FC = () => {
     (async () => {
       try {
         setLoading(true);
+        // Add a small delay to handle potential database replication lag
+        await new Promise((resolve) => setTimeout(resolve, 300));
         const doc = await getDiagram(diagramId);
         if (alive) setDiagram(doc);
       } catch (e: any) {
